@@ -497,12 +497,12 @@ private:
                             std::wstringstream db_path_quotation_wsstream;
                             std::copy(db_path_quotation.begin(), db_path_quotation.end(), std::ostream_iterator<std::wstring, wchar_t>(db_path_quotation_wsstream, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8" ").c_str()));
 
-                            boost::filesystem::path exe_path = boost::process::search_path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"kiwi.fast.batch_d"));
-                            if(!boost::filesystem::exists(exe_path))
-                            {
-                                std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"执行文件不存在") << '\n';
-                                return;
-                            }
+//                            boost::filesystem::path exe_path = boost::process::search_path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"kiwi.fast.batch_d"));
+//                            if(!boost::filesystem::exists(exe_path))
+//                            {
+//                                std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"执行文件不存在") << '\n';
+//                                return;
+//                            }
 
                             boost::process::child child_(
                                         //必须完整路径

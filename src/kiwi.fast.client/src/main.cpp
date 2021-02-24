@@ -30,7 +30,7 @@ bool statistic_station_count(std::string* error = nullptr)
     send_http_post_request_.set_target(u8"/station_count/query_condition");
 
     KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_condition<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER station_count> query_condition_;
-    for(int year = 1772; year <= 2020; ++year)
+    for(int year = 1930; year <= 1999; ++year)
     {
         for(int month = 1; month <= 12; ++month)
         {
