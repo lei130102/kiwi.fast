@@ -92,15 +92,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
     boost::program_options::variables_map variables_map_;
     boost::program_options::store(pr, variables_map_);
-    std::ifstream ifs(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"config.ini").c_str());
-    if(!ifs)
-    {
-        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"无法打开配置文件") << '\n';
-    }
-    else
-    {
-        boost::program_options::store(boost::program_options::parse_config_file<char>(ifs, options_description_, true), variables_map_);
-    }
+
     boost::program_options::notify(variables_map_);
 
     if(variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"help")))
@@ -109,6 +101,10 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
         return 0;
     }
 
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_address:") << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(variables_map_["server_address"].as<std::wstring>()) << '\n';
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_port:") << variables_map_["server_port"].as<unsigned short>() << '\n';
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_root:") << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(variables_map_["server_root"].as<std::wstring>()) << '\n';
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_thread:") << variables_map_["server_thread"].as<int>() << '\n';
 
     ////
 

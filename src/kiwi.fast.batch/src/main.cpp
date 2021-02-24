@@ -19,8 +19,21 @@
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
-    boost::program_options::options_description options_description_(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"所有选项"), 500);
+    //配置日志文件
+    //每到文件大小大于10mb或者到午夜，转为另一个文件
+    boost::log::add_file_log(
+                boost::log::keywords::file_name = "kiwi.fast.batch_log_%N.log",
+                boost::log::keywords::rotation_size = 10*1024*1024,
+                boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_point(0,0,0),
+                boost::log::keywords::format = "[%TimeStamp%][%ProcessID%:%ThreadID%]:%Message%"
+            );
+    boost::log::core::get()->set_filter(
+                boost::log::trivial::severity >= boost::log::trivial::info
+                );
+    boost::log::add_common_attributes();
 
+    //配置命令行参数
+    boost::program_options::options_description options_description_(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"所有选项"), 500);
     /* 选项信息的字符长度是有限制的，因为太长会自动换行，导致截断换行输出乱码 */
     options_description_.add_options()
             //year
@@ -99,48 +112,68 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     if(is_debug)
     {
         //测试
-        year = 1900;
-        month = 5;
+        year = 1999;
+        month = 6;
         element = 0;
-        interval = 5;
-        sqlite_filepath.push_back(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8R"(F:\DQ1028Data\海洋水文资料\海洋温盐\国际交换与合作资料\信息中心\历史\Basic\S7601-Y1900-TS.dat.db)"));
+        interval = 2;
+
+        sqlite_filepath.push_back(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8R"(F:\DQ1028Data\海洋水文资料\海洋温盐\国际业务化资料\信息中心\历史\Basic\S1000-Y1999-TS.dat.db)"));
+        sqlite_filepath.push_back(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8R"(F:\DQ1028Data\海洋水文资料\海洋温盐\国际业务化资料\信息中心\历史\Basic\S1004-Y1999-TS.dat.db)"));
+        sqlite_filepath.push_back(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8R"(F:\DQ1028Data\海洋水文资料\海洋温盐\国际业务化资料\信息中心\历史\Basic\S1005-Y1999-TS.dat.db)"));
     }
     else
     {
         //year
         if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"year")))
         {
+            BOOST_LOG_TRIVIAL(error) << "没有提供year选项的值";
+
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供year选项的值");
         }
         year = variables_map_["year"].as<int>();
-        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"year:") << year << '\n';
+        BOOST_LOG_TRIVIAL(error) << "year:" << year;
+
         //month
         if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"month")))
         {
+            BOOST_LOG_TRIVIAL(error) << "没有提供month选项的值";
+
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供month选项的值");
         }
         month = variables_map_["month"].as<int>();
-        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"month:") << month << '\n';
+        BOOST_LOG_TRIVIAL(error) << "month:" << month;
+
         //element
         if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"element")))
         {
+            BOOST_LOG_TRIVIAL(error) << "没有提供element选项的值";
+
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供element选项的值");
         }
         element = variables_map_["element"].as<int>();
-        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"element:") << element << '\n';
+        BOOST_LOG_TRIVIAL(error) << "element:" << element;
+
         //interval
         if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"interval")))
         {
+            BOOST_LOG_TRIVIAL(error) << "没有提供interval选项的值";
+
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供interval选项的值");
         }
         interval = variables_map_["interval"].as<int>();
-        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"interval:") << interval << '\n';
+        BOOST_LOG_TRIVIAL(error) << "interval:" << interval;
+
         //sqlite_filepath
         if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"sqlite_filepath")))
         {
+            BOOST_LOG_TRIVIAL(error) << "没有提供sqlite_filepath选项的值";
+
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供sqlite_filepath选项的值");
         }
         sqlite_filepath = variables_map_["sqlite_filepath"].as<std::vector<std::wstring>>();
+        std::wstringstream wsstream;
+        std::copy(sqlite_filepath.begin(), sqlite_filepath.end(), std::ostream_iterator<std::wstring, wchar_t>(wsstream, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8" ").c_str()));
+        BOOST_LOG_TRIVIAL(error) << "sqlite_filepath:" << reinterpret_cast<const char*>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(wsstream.str()).c_str());
     }
 
     //////
@@ -159,6 +192,8 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
                 , &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
         if(open_result != SQLITE_OK)
         {
+            BOOST_LOG_TRIVIAL(error) << "打开数据库连接失败";
+
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, std::u8string(u8"打开数据库连接失败：") + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(std::to_wstring(open_result)));
         }
 
@@ -230,6 +265,8 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
         sql += u8" GROUP BY subtable.Lat, subtable.Lon;";
 
+        BOOST_LOG_TRIVIAL(error) << "sql:" << reinterpret_cast<const char*>(sql.c_str());
+
         sqlite3_stmt* sqlite_stmt = nullptr;
         int prepare_result = sqlite3_prepare_v2(
                     pDB
@@ -239,6 +276,8 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
                     , NULL);
         if(prepare_result != SQLITE_OK)
         {
+            BOOST_LOG_TRIVIAL(error) << "查询语句错误";
+
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"查询语句错误");
         }
 
@@ -279,7 +318,9 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
     if(!send_http_post_request_())
     {
-        return -1;
+        BOOST_LOG_TRIVIAL(error) << "发送结果请求失败";
+
+        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送结果请求失败");
     }
 
     return 0;

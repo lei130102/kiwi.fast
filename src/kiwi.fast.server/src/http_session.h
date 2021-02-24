@@ -411,6 +411,8 @@ private:
             {
                 std::lock_guard<std::mutex> lg(mutex_);
 
+//                std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(query_condition_path_prefix) << '\n';
+
                 try
                 {
                     std::string body = boost::beast::buffers_to_string(request.body().data());
@@ -426,7 +428,7 @@ private:
                         std::vector<std::wstring> db_path;
 
                         sqlite3* pDB = nullptr;
-                        int open_result = sqlite3_open_v2(reinterpret_cast<const char*>(u8R"(D:\OtherDocuments\HY3008\Output\sqlite\hysw_gyxx.db)"),
+                        int open_result = sqlite3_open_v2(reinterpret_cast<const char*>(u8R"(E:\hysw_gyxx.db)"),
                                                           &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
                         if(open_result != SQLITE_OK)
                         {
@@ -457,7 +459,7 @@ private:
                             return;//查询语句错误
                         }
 
-                        boost::filesystem::path db_root = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8R"(F:\DQ1028Data)");
+                        boost::filesystem::path db_root = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8R"(E:\DQ1028Data)");
                         db_root.remove_trailing_separator();
 
                         while(sqlite3_step(sqlite_stmt) == SQLITE_ROW)
@@ -473,6 +475,19 @@ private:
                             pDB = nullptr;
                         }
 
+//                        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"新任务") << '\n';
+//                        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"year:") << year << '\n';
+//                        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"month:") << month << '\n';
+//                        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"element:") << element << '\n';
+//                        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"interval:") << interval << '\n';
+//                        std::vector<std::wstring> db_path_quotation;
+//                        std::transform(db_path.begin(), db_path.end(), std::back_inserter(db_path_quotation),[](std::wstring const& element){
+//                            return KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8"\"") + element + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8"\"");
+//                        });
+//                        std::wstringstream db_path_quotation_wsstream;
+//                        std::copy(db_path_quotation.begin(), db_path_quotation.end(), std::ostream_iterator<std::wstring, wchar_t>(db_path_quotation_wsstream, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8" ").c_str()));
+//                        std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"db_path:") << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(db_path_quotation_wsstream.str()) << '\n';
+
                         p_threadpool->post([](int year, int month, int element, int interval, std::vector<std::wstring> const& db_path){
 
                             std::vector<std::wstring> db_path_quotation;
@@ -482,21 +497,27 @@ private:
                             std::wstringstream db_path_quotation_wsstream;
                             std::copy(db_path_quotation.begin(), db_path_quotation.end(), std::ostream_iterator<std::wstring, wchar_t>(db_path_quotation_wsstream, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8" ").c_str()));
 
+                            boost::filesystem::path exe_path = boost::process::search_path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"kiwi.fast.batch_d"));
+                            if(!boost::filesystem::exists(exe_path))
+                            {
+                                std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"执行文件不存在") << '\n';
+                                return;
+                            }
+
                             boost::process::child child_(
-                                        boost::process::search_path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"kiwi.fast.batch_d"))
-                                        , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"--year ") + std::to_string(year)
-                                        , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"--month ") + std::to_string(month)
-                                        , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"--element ") + std::to_string(element)
-                                        , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"--interval ") + std::to_string(interval)
-                                        , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"--sqlite_filepath ") + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(db_path_quotation_wsstream.str())
-                                        , boost::process::std_out > boost::process::null
-                                        , boost::process::std_err > boost::process::null);
+                                        //必须完整路径
+                                        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8R"(D:\OtherDocuments\build-kiwi.fast-Desktop_Qt_MinGW_w64_64bit_MSYS2-Debug\bin\kiwi.fast.batch_d.exe)")
+                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --year ") + std::to_string(year)
+                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --month ") + std::to_string(month)
+                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --element ") + std::to_string(element)
+                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --interval ") + std::to_string(interval)
+                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --sqlite_filepath ") + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(db_path_quotation_wsstream.str()));
 
                             child_.wait();
                             int result = child_.exit_code();
                             if(result != 0)
                             {
-                                //日志记录没有执行成功
+                                return;
                             }
 
                         }, year, month, element, interval, db_path);
@@ -515,6 +536,8 @@ private:
             {
                 std::lock_guard<std::mutex> lg(mutex_);
 
+                std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(query_result_path_prefix) << '\n';
+
                 try
                 {
                     std::string body = boost::beast::buffers_to_string(request.body().data());
@@ -527,7 +550,7 @@ private:
                     query_result_.handle([](int year, int month, int element, int interval, double lat, double lon, std::uint64_t count){
 
                         sqlite3* pDB = nullptr;
-                        int open_result = sqlite3_open_v2(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8R"(D:\OtherDocuments\HY3008\Output\sqlite\hysw_gyxx.db)").c_str(),
+                        int open_result = sqlite3_open_v2(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8R"(E:\hysw_gyxx.db)").c_str(),
                                                           &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
                         if(open_result != SQLITE_OK)
                         {

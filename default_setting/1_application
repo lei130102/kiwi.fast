@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<setting>
+	<item>
+		<name>server_address</name>
+		<type>string</type>
+		<value>127.0.0.1</value>
+	</item>
+	<item>
+		<name>server_port</name>
+		<type>string</type>
+		<value>8911</value>
+	</item>
+	<item>
+		<name>server_root</name>
+		<type>string</type>
+		<value>.</value>
+	</item>
+	<item>
+		<name>server_thread</name>
+		<type>int</type>
+		<value>1</value>
+	</item>
+</setting>
