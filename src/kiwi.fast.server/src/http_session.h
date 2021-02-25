@@ -185,7 +185,6 @@ public:
         ,mutex_(mutex)
         ,threadpool_(threadpool)
     {
-        parser_->body_limit(std::numeric_limits<std::uint64_t>::max());
     }
 
     //开始会话过程
@@ -226,6 +225,8 @@ private:
     {
         //为每个请求消息构造一个新的解析器
         parser_.emplace();
+
+        parser_->body_limit(std::numeric_limits<std::uint64_t>::max());
 
         //设置超时时间
         stream_.expires_after(std::chrono::seconds(20));
@@ -493,8 +494,6 @@ private:
 
                         p_threadpool->post([](int year, int month, int element, int interval, std::vector<std::wstring> const& db_path){
 
-                            thread_local int cpu_mask;
-
                             BOOST_LOG_TRIVIAL(error)
                                     << "/station_count/query_condition" << "---"
                                     << "year:" << year << " "
@@ -502,7 +501,7 @@ private:
                                     << "element:" << element << " "
                                     << "interval:" << interval << " "
                                     << "file count:" << db_path.size() << " "
-                                    << "cpu_mask:" << cpu_mask;
+                                    << "cpu_mask:" << KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu::cpu_mask();
 
                             std::vector<std::wstring> db_path_quotation;
                             std::transform(db_path.begin(), db_path.end(), std::back_inserter(db_path_quotation),[](std::wstring const& element){
@@ -521,7 +520,7 @@ private:
                             boost::process::child child_(
                                         //必须完整路径
                                         KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8R"(D:\OtherDocuments\build-kiwi.fast-Desktop_Qt_MinGW_w64_64bit_MSYS2-Debug\bin\kiwi.fast.batch_d.exe)")
-                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --cpu_mask ") + std::to_string(cpu_mask)
+                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --cpu_mask ") + std::to_string(KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu::cpu_mask())
                                         + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --year ") + std::to_string(year)
                                         + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --month ") + std::to_string(month)
                                         + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --element ") + std::to_string(element)

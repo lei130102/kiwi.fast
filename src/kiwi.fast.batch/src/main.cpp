@@ -139,7 +139,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供cpu_mask选项的值");
         }
         cpu_mask = variables_map_["cpu_mask"].as<int>();
-        BOOST_LOG_TRIVIAL(error) << "year:" << year;
+        BOOST_LOG_TRIVIAL(error) << "cpu_mask:" << cpu_mask;
         //year
         if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"year")))
         {
@@ -188,9 +188,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供sqlite_filepath选项的值");
         }
         sqlite_filepath = variables_map_["sqlite_filepath"].as<std::vector<std::wstring>>();
-        std::wstringstream wsstream;
-        std::copy(sqlite_filepath.begin(), sqlite_filepath.end(), std::ostream_iterator<std::wstring, wchar_t>(wsstream, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8" ").c_str()));
-        BOOST_LOG_TRIVIAL(error) << "sqlite_filepath:" << reinterpret_cast<const char*>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(wsstream.str()).c_str());
+        BOOST_LOG_TRIVIAL(error) << "sqlite_filepath size:" << sqlite_filepath.size();
     }
 
     SetProcessAffinityMask(GetCurrentProcess(), cpu_mask.get());

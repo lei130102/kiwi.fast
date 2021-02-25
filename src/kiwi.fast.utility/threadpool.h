@@ -70,7 +70,7 @@ public:
         {
             m_threads.push_back(std::make_shared<std::thread>([&](DWORD mask){
 
-                thread_local int cpu_mask = mask;
+                m_cpu_mask = mask;
 
                 SetThreadAffinityMask(GetCurrentThread(), mask);
 
@@ -106,12 +106,19 @@ public:
         m_io.post(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
     }
 
+    static int cpu_mask()
+    {
+        return m_cpu_mask;
+    }
+
 private:
     bool m_stopped;
     std::vector<std::shared_ptr<std::thread>> m_threads;
     int m_thread_num;
     boost::asio::io_context m_io;
     boost::asio::io_context::work m_work;
+
+    static thread_local int m_cpu_mask;
 };
 
 
