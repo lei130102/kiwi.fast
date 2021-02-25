@@ -16,13 +16,15 @@
 
 #include <fstream>
 #include <cstdint>
+#include <vector>
+#include <string>
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
     //配置日志文件
     //每到文件大小大于10mb或者到午夜，转为另一个文件
     boost::log::add_file_log(
-                boost::log::keywords::file_name = "kiwi.fast.batch_log_%N.log",
+                boost::log::keywords::file_name = "kiwi.fast.batch_log_%Y-%m-%d_%H-%M-%S.%N.log",
                 boost::log::keywords::rotation_size = 10*1024*1024,
                 boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_point(0,0,0),
                 boost::log::keywords::format = "[%TimeStamp%][%ProcessID%:%ThreadID%]:%Message%"
@@ -36,6 +38,10 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     boost::program_options::options_description options_description_(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"所有选项"), 500);
     /* 选项信息的字符长度是有限制的，因为太长会自动换行，导致截断换行输出乱码 */
     options_description_.add_options()
+            //cpu_mask
+            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"cpu_mask").c_str()
+             , boost::program_options::wvalue<int>()
+             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"cpu mask").c_str())
             //year
             (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"year").c_str()
              , boost::program_options::wvalue<int>()
@@ -104,6 +110,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
     bool is_debug = false;
 
+    boost::optional<int> cpu_mask;
     boost::optional<int> year;
     boost::optional<int> month;
     boost::optional<int> element;
@@ -112,6 +119,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     if(is_debug)
     {
         //测试
+        cpu_mask = 0x00000002;
         year = 1999;
         month = 6;
         element = 0;
@@ -123,6 +131,15 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     }
     else
     {
+        //cpu_mask
+        if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"cpu_mask")))
+        {
+            BOOST_LOG_TRIVIAL(error) << "没有提供cpu_mask选项的值";
+
+            KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"没有提供cpu_mask选项的值");
+        }
+        cpu_mask = variables_map_["cpu_mask"].as<int>();
+        BOOST_LOG_TRIVIAL(error) << "year:" << year;
         //year
         if(!variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"year")))
         {
@@ -176,10 +193,16 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
         BOOST_LOG_TRIVIAL(error) << "sqlite_filepath:" << reinterpret_cast<const char*>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(wsstream.str()).c_str());
     }
 
+    SetProcessAffinityMask(GetCurrentProcess(), cpu_mask.get());
+
+    BOOST_LOG_TRIVIAL(error) << "sqlite file count:" << sqlite_filepath.size();
+
     //////
     KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_result<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER station_count> query_result_;
     for(auto const& filepath : sqlite_filepath)
     {
+        BOOST_LOG_TRIVIAL(error) << "sqlite file path:" << reinterpret_cast<const char*>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(filepath).c_str());
+
         boost::filesystem::path sqlite_filepath_path(filepath);
 
         if(!boost::filesystem::exists(sqlite_filepath_path))
@@ -189,7 +212,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
         sqlite3* pDB = nullptr;
         int open_result = sqlite3_open_v2(reinterpret_cast<const char*>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(sqlite_filepath_path.native()).c_str())
-                , &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+                , &pDB, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, NULL);
         if(open_result != SQLITE_OK)
         {
             BOOST_LOG_TRIVIAL(error) << "打开数据库连接失败";
@@ -265,8 +288,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
         sql += u8" GROUP BY subtable.Lat, subtable.Lon;";
 
-        BOOST_LOG_TRIVIAL(error) << "sql:" << reinterpret_cast<const char*>(sql.c_str());
-
         sqlite3_stmt* sqlite_stmt = nullptr;
         int prepare_result = sqlite3_prepare_v2(
                     pDB
@@ -276,7 +297,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
                     , NULL);
         if(prepare_result != SQLITE_OK)
         {
-            BOOST_LOG_TRIVIAL(error) << "查询语句错误";
+            BOOST_LOG_TRIVIAL(error) << "sql error";
 
             KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"查询语句错误");
         }
@@ -300,9 +321,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
         query_result_.merge(tmp_query_result);
     }
 
-
-
-
+    BOOST_LOG_TRIVIAL(error) << "sql finished";
 
     //通过服务器上传数据query_result_
 
@@ -318,10 +337,12 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
     if(!send_http_post_request_())
     {
-        BOOST_LOG_TRIVIAL(error) << "发送结果请求失败";
+        BOOST_LOG_TRIVIAL(error) << "update error";
 
         KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送结果请求失败");
     }
+
+    BOOST_LOG_TRIVIAL(error) << "update finished";
 
     return 0;
 }

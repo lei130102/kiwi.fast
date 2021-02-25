@@ -15,7 +15,7 @@
 #include <fstream>
 #include <cstdint>
 
-KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool g_threadpool(20);
+KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu g_threadpool;
 
 void on_accept(
         boost::asio::ip::tcp::acceptor* pacceptor
@@ -51,15 +51,16 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     //配置日志文件
     //每到文件大小大于10mb或者到午夜，转为另一个文件
     boost::log::add_file_log(
-                boost::log::keywords::file_name = "kiwi.fast.server_log_%N.log",
+                boost::log::keywords::file_name = "kiwi.fast.server_log_%Y-%m-%d_%H-%M-%S.%N.log",
                 boost::log::keywords::rotation_size = 10*1024*1024,
                 boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_point(0,0,0),
-                boost::log::keywords::format = "[%TimeStamp%]:%Message%"
+                boost::log::keywords::format = "[%TimeStamp%][%ProcessID%:%ThreadID%]:%Message%"
             );
     boost::log::core::get()->set_filter(
                 boost::log::trivial::severity >= boost::log::trivial::info
                 );
     boost::log::add_common_attributes();
+
 
     //配置命令行参数
     boost::program_options::options_description options_description_(

@@ -7,7 +7,6 @@
 #include <kiwi.fast.plugin_utility/code_conversion.h>
 
 #include <kiwi.fast.model/detail/station_count.h>
-#include <kiwi.fast.model/detail/station_count_producer_consumer.h>
 
 #include <kiwi.fast.utility/threadpool.h>
 
@@ -123,41 +122,45 @@ class http_session : public std::enable_shared_from_this<http_session>
             return was_full;
         }
 
-        void operator()(boost::beast::http::message<false,boost::beast::http::basic_string_body<char8_t>,boost::beast::http::fields> msg);
-        void operator()(boost::beast::http::message<false,boost::beast::http::empty_body,boost::beast::http::fields> msg);
-        void operator()(boost::beast::http::message<false,boost::beast::http::file_body,boost::beast::http::fields> msg);
-        //不使用boost::beast::file_body，因为他使用的boost::beast::file只针对2GB以下的文件
-        void operator()(boost::beast::http::message<false,boost::beast::http::basic_file_body<file>,boost::beast::http::fields> msg);
-
-    private:
-        //This holds a work item
+        // Called by the HTTP handler to send a response
         template<bool isRequest, class Body, class Fields>
-        struct work_impl : queue::work
+        void operator()(boost::beast::http::message<isRequest, Body, Fields>&& msg)
         {
-            http_session& self_;
-            boost::beast::http::message<isRequest, Body, Fields> msg_;
-
-            work_impl(
-                    http_session& self,
-                    boost::beast::http::message<isRequest, Body, Fields> msg
-                    )
-                :self_(self)
-                , msg_(std::move(msg))
-            {}
-
-            void operator()()
+            // This holds a work item
+            struct work_impl : work
             {
-                boost::beast::http::async_write(
-                            self_.stream(),
-                            msg_,
-                            boost::beast::bind_front_handler(
-                                &http_session::on_write,
-                                self_.shared_from_this(),
-                                msg_.need_eof()
-                                )
-                            );
+                http_session& self_;
+                boost::beast::http::message<isRequest, Body, Fields> msg_;
+
+                work_impl(
+                            http_session& self,
+                            boost::beast::http::message<isRequest, Body, Fields>&& msg)
+                    :self_(self)
+                    ,msg_(std::move(msg))
+                {}
+
+                void operator()()
+                {
+                    boost::beast::http::async_write(
+                                self_.stream_,
+                                msg_,
+                                boost::beast::bind_front_handler(
+                                    &http_session::on_write,
+                                    self_.shared_from_this(),
+                                    msg_.need_eof()));
+                }
+            };
+
+            // Allocate and store the work
+            items_.push_back(
+                        boost::make_unique<work_impl>(self_, std::move(msg)));
+
+            // If there was no previous work, start this one
+            if(items_.size() == 1)
+            {
+                (*items_.front())();
             }
-        };
+        }
 
         enum
         {
@@ -174,7 +177,7 @@ public:
             boost::asio::ip::tcp::socket&& socket
             , std::string const& server_root
             , std::mutex& mutex
-            , KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool* threadpool
+            , KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu* threadpool
             )
         :stream_(std::move(socket))
         ,server_root_(server_root)
@@ -413,8 +416,6 @@ private:
             {
                 std::lock_guard<std::mutex> lg(mutex_);
 
-//                std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(query_condition_path_prefix) << '\n';
-
                 try
                 {
                     std::string body = boost::beast::buffers_to_string(request.body().data());
@@ -424,14 +425,14 @@ private:
 
                     ////
 
-                    query_condition_.handle([](int year, int month, int element, int interval, KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool* p_threadpool){
+                    query_condition_.handle([](int year, int month, int element, int interval, KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu* p_threadpool){
 
                         //获取db文件路径
                         std::vector<std::wstring> db_path;
 
                         sqlite3* pDB = nullptr;
                         int open_result = sqlite3_open_v2(reinterpret_cast<const char*>(u8R"(E:\hysw_gyxx.db)"),
-                                                          &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+                                                          &pDB, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, NULL);
                         if(open_result != SQLITE_OK)
                         {
                             return;//打开数据库连接失败
@@ -492,6 +493,17 @@ private:
 
                         p_threadpool->post([](int year, int month, int element, int interval, std::vector<std::wstring> const& db_path){
 
+                            thread_local int cpu_mask;
+
+                            BOOST_LOG_TRIVIAL(error)
+                                    << "/station_count/query_condition" << "---"
+                                    << "year:" << year << " "
+                                    << "month:" << month << " "
+                                    << "element:" << element << " "
+                                    << "interval:" << interval << " "
+                                    << "file count:" << db_path.size() << " "
+                                    << "cpu_mask:" << cpu_mask;
+
                             std::vector<std::wstring> db_path_quotation;
                             std::transform(db_path.begin(), db_path.end(), std::back_inserter(db_path_quotation),[](std::wstring const& element){
                                 return KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8"\"") + element + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8"\"");
@@ -509,6 +521,7 @@ private:
                             boost::process::child child_(
                                         //必须完整路径
                                         KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8R"(D:\OtherDocuments\build-kiwi.fast-Desktop_Qt_MinGW_w64_64bit_MSYS2-Debug\bin\kiwi.fast.batch_d.exe)")
+                                        + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --cpu_mask ") + std::to_string(cpu_mask)
                                         + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --year ") + std::to_string(year)
                                         + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --month ") + std::to_string(month)
                                         + KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8" --element ") + std::to_string(element)
@@ -538,7 +551,7 @@ private:
             {
                 std::lock_guard<std::mutex> lg(mutex_);
 
-                std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(query_result_path_prefix) << '\n';
+                //std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(query_result_path_prefix) << '\n';
 
                 try
                 {
@@ -549,11 +562,21 @@ private:
 
                     ////
 
-                    query_result_.handle([](int year, int month, int element, int interval, double lat, double lon, std::uint64_t count){
+                    query_result_.handle([&](int year, int month, int element, int interval, double lat, double lon, std::uint64_t count){
+
+                        BOOST_LOG_TRIVIAL(error)
+                                    << "/station_count/query_result" << "---"
+                                    << "year:" << year << " "
+                                    << "month:" << month << " "
+                                    << "element:" << element << " "
+                                    << "interval:" << interval << " "
+                                    << "lat:" << lat << " "
+                                    << "lon:" << lon << " "
+                                    << "count:" << count;
 
                         sqlite3* pDB = nullptr;
                         int open_result = sqlite3_open_v2(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8R"(E:\hysw_gyxx.db)").c_str(),
-                                                          &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+                                                          &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX, NULL);
                         if(open_result != SQLITE_OK)
                         {
                             return;//打开数据库连接失败
@@ -692,7 +715,7 @@ private:
     std::string server_root_;
     queue queue_;
     std::mutex& mutex_;
-    KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool* threadpool_;
+    KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu* threadpool_;
 
     //使用boost::beast::http::basic_file_body<file>>是为了避免请求和响应中body的大小限制
     //还需要配合 parser_->body_limit(std::numeric_limits<std::uint64_t>::max());
