@@ -24,20 +24,21 @@ namespace detail
 {
     struct station_count;
 
-    template<>
-    struct task_parameter<station_count>
-    {
-        //年 1990-1990年
-        int year;
-        //月 1-一月
-        int month;
-        //要素 0-温度 1-盐度
-        int element;
-        //分辨率 2-2° 5-5°
-        int interval;
-        //数据库文件路径
-        std::vector<std::wstring> db_path;
-    };
+    //暂时没用
+//    template<>
+//    struct task_parameter<station_count>
+//    {
+//        //年 1990-1990年
+//        int year;
+//        //月 1-一月
+//        int month;
+//        //要素 0-温度 1-盐度
+//        int element;
+//        //分辨率 2-2° 5-5°
+//        int interval;
+//        //数据库文件路径
+//        std::vector<std::wstring> db_path;
+//    };
 
     template<>
     struct query_condition<station_count>
@@ -84,17 +85,18 @@ namespace detail
 
 struct station_count;
 
-template<>
-class task_parameter<station_count> : protected detail::task_parameter<detail::station_count>
-{
-public:
-    using base_type = detail::task_parameter<detail::station_count>;
+//暂时没用
+//template<>
+//class task_parameter<station_count> : protected detail::task_parameter<detail::station_count>
+//{
+//public:
+//    using base_type = detail::task_parameter<detail::station_count>;
 
-public:
-    task_parameter(int year, int month, int element, int interval, std::vector<std::wstring> const& db_path)
-        : base_type{year, month, element, interval, db_path}
-    {}
-};
+//public:
+//    task_parameter(int year, int month, int element, int interval, std::vector<std::wstring> const& db_path)
+//        : base_type{year, month, element, interval, db_path}
+//    {}
+//};
 
 template<>
 class query_condition<station_count> : protected detail::query_condition<detail::station_count>

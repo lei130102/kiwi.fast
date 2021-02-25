@@ -181,7 +181,9 @@ public:
         ,queue_(*this)
         ,mutex_(mutex)
         ,threadpool_(threadpool)
-    {}
+    {
+        parser_->body_limit(std::numeric_limits<std::uint64_t>::max());
+    }
 
     //开始会话过程
     void run()
@@ -691,6 +693,10 @@ private:
     queue queue_;
     std::mutex& mutex_;
     KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool* threadpool_;
+
+    //使用boost::beast::http::basic_file_body<file>>是为了避免请求和响应中body的大小限制
+    //还需要配合 parser_->body_limit(std::numeric_limits<std::uint64_t>::max());
+    //boost::optional<boost::beast::http::request_parser<boost::beast::http::basic_file_body<file>>> parser_;
 
     boost::optional<boost::beast::http::request_parser<boost::beast::http::dynamic_body>> parser_;
 };
