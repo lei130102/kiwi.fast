@@ -15,13 +15,13 @@
 #include <fstream>
 #include <cstdint>
 
-KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu g_threadpool;
 
 void on_accept(
         boost::asio::ip::tcp::acceptor* pacceptor
         , boost::asio::io_context* pio_context
         , std::string const& server_root
-        , std::mutex* pmutex
+        , std::mutex* global_mutex
+        , KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu* global_threadpool
         , boost::beast::error_code ec
         , boost::asio::ip::tcp::socket socket)
 {
@@ -35,15 +35,15 @@ void on_accept(
         std::make_shared<http_session>(
                     std::move(socket),
                     server_root,
-                    *pmutex,
-                    &g_threadpool
+                    *global_mutex,
+                    *global_threadpool
                     )->run();
     }
 
     //Accept another connection
     pacceptor->async_accept(
                 boost::asio::make_strand(*pio_context)
-                , boost::beast::bind_front_handler(&on_accept, pacceptor, pio_context, server_root, pmutex));
+                , boost::beast::bind_front_handler(&on_accept, pacceptor, pio_context, server_root, global_mutex, global_threadpool));
 }
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
@@ -51,7 +51,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     //配置日志文件
     //每到文件大小大于10mb或者到午夜，转为另一个文件
     boost::log::add_file_log(
-                boost::log::keywords::file_name = "kiwi.fast.server_log_%Y-%m-%d_%H-%M-%S.%N.log",
+                boost::log::keywords::file_name = "kiwi.fast.server_log_%Y-%m-%d_%H-%M-%S%F.%N.log",
                 boost::log::keywords::rotation_size = 10*1024*1024,
                 boost::log::keywords::time_based_rotation = boost::log::sinks::file::rotation_at_time_point(0,0,0),
                 boost::log::keywords::format = "[%TimeStamp%][%ProcessID%:%ThreadID%]:%Message%"
@@ -64,23 +64,23 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
     //配置命令行参数
     boost::program_options::options_description options_description_(
-                KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"所有选项"), 500);
+                KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"所有选项"), 500);
     options_description_.add_options()
-            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_address").c_str()
-             , boost::program_options::wvalue<std::wstring>()->default_value(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8"127.0.0.1"), KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"127.0.0.1"))
-             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"服务器地址").c_str())
-            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_port").c_str()
+            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_address").c_str()
+             , boost::program_options::wvalue<std::wstring>()->default_value(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"127.0.0.1"), KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"127.0.0.1"))
+             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"服务器地址").c_str())
+            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_port").c_str()
              , boost::program_options::wvalue<unsigned short>()->default_value(8911)
-             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"服务器端口").c_str())
-            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_root").c_str()
-             , boost::program_options::wvalue<std::wstring>()->default_value(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(u8"."), KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"."))
-             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"服务器根目录").c_str())
-            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_thread").c_str()
+             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"服务器端口").c_str())
+            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_root").c_str()
+             , boost::program_options::wvalue<std::wstring>()->default_value(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"."), KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"."))
+             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"服务器根目录").c_str())
+            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_thread").c_str()
              , boost::program_options::wvalue<int>()->default_value(1)
-             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"服务器线程数").c_str())
+             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"服务器线程数").c_str())
             //
-            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"help").c_str()
-             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"帮助信息").c_str())
+            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"help").c_str()
+             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"帮助信息").c_str())
             ;
 
     auto pr = boost::program_options::wcommand_line_parser(argc, argv)
@@ -96,16 +96,16 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
     boost::program_options::notify(variables_map_);
 
-    if(variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"help")))
+    if(variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"help")))
     {
         std::cout << options_description_ << '\n';
         return 0;
     }
 
-    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_address:") << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(variables_map_["server_address"].as<std::wstring>()) << '\n';
-    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_port:") << variables_map_["server_port"].as<unsigned short>() << '\n';
-    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_root:") << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(variables_map_["server_root"].as<std::wstring>()) << '\n';
-    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"server_thread:") << variables_map_["server_thread"].as<int>() << '\n';
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_address:") << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(variables_map_["server_address"].as<std::wstring>()) << '\n';
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_port:") << variables_map_["server_port"].as<unsigned short>() << '\n';
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_root:") << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(variables_map_["server_root"].as<std::wstring>()) << '\n';
+    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"server_thread:") << variables_map_["server_thread"].as<int>() << '\n';
 
     ////
 
@@ -114,7 +114,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     boost::asio::ip::tcp::acceptor acceptor_(boost::asio::make_strand(io_context_));
 
     boost::asio::ip::tcp::endpoint endpoint_{
-        boost::asio::ip::make_address(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(variables_map_["server_address"].as<std::wstring>()))
+        boost::asio::ip::make_address(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(variables_map_["server_address"].as<std::wstring>()))
         , variables_map_["server_port"].as<unsigned short>()
     };
 
@@ -123,37 +123,39 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     acceptor_.open(endpoint_.protocol(), ec);
     if(ec)
     {
-        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(ec.message()));
+        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(ec.message()));
     }
 
     //Allow address reuse
     acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
     if(ec)
     {
-        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(ec.message()));
+        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(ec.message()));
     }
 
     //Bind to the server address
     acceptor_.bind(endpoint_, ec);
     if(ec)
     {
-        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(ec.message()));
+        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(ec.message()));
     }
 
     //Start listening for connections
     acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
     if(ec)
     {
-        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(ec.message()));
+        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER runtime_error, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(ec.message()));
     }
 
-    std::string server_root = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(variables_map_["server_root"].as<std::wstring>());
+    std::string server_root = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(variables_map_["server_root"].as<std::wstring>());
+
     std::mutex mutex_;
+    KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER threadpool_per_cpu threadpool_;
 
     //The new connection gets its own strand
     acceptor_.async_accept(
                 boost::asio::make_strand(io_context_)
-                , boost::beast::bind_front_handler(&on_accept, &acceptor_, &io_context_, server_root, &mutex_));
+                , boost::beast::bind_front_handler(&on_accept, &acceptor_, &io_context_, server_root, &mutex_, &threadpool_));
 
     //捕获SIGINT和SIGTERM信号，执行一个干净的退出
     boost::asio::signal_set signals(io_context_, SIGINT, SIGTERM);

@@ -62,9 +62,11 @@ public:
     threadpool_per_cpu()
         : m_stopped(false), m_work(m_io)
     {
-        SYSTEM_INFO info;
-        GetSystemInfo(&info);
-        m_thread_num = info.dwNumberOfProcessors - 1;
+        m_thread_num = std::thread::hardware_concurrency() - 1; //减1帮助减少对cpu的压力
+        if(m_thread_num == 0)
+        {
+            m_thread_num = 1;
+        }
 
         for(int i = 0; i < m_thread_num; ++i)
         {

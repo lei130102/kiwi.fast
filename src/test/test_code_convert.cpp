@@ -17,7 +17,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     char** argv_ = new char*[argc];
     for(int i = 0; i < argc; ++i)
     {
-        argv_[i] = strdup(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(argv[i]).c_str());
+        argv_[i] = strdup(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(argv[i]).c_str());
     }
 
     return ::boost::unit_test::unit_test_main( &init_unit_test, argc, argv_ );
@@ -243,28 +243,28 @@ BOOST_AUTO_TEST_CASE(c_test_to)
     //string -> wstring
     {
         std::string input = {'\xb1','\xe0','\xc2','\xeb'};        //B1 E0 C2 EB 00     (GBK编码)
-        std::wstring result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(input);
+        std::wstring result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(input);
         BOOST_CHECK(result == L"编码");
     }
 
     //wstring -> string
     {
         std::wstring input = L"编码";
-        std::string result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(input);
+        std::string result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(input);
         BOOST_CHECK(result == std::string({'\xb1','\xe0','\xc2','\xeb'}));
     }
 
     //u8string -> wstring
     {
         std::u8string input = u8"编码";                  //E7 BC 96 E7 A0 81 00     (UTF8编码)
-        std::wstring result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_wide(input);
+        std::wstring result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(input);
         BOOST_CHECK(result == L"编码");
     }
 
     //wstring -> u8string
     {
         std::wstring input = L"编码";
-        std::u8string result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(input);
+        std::u8string result = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(input);
         BOOST_CHECK(result == u8"编码");
     }
 }

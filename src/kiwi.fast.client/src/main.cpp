@@ -2,16 +2,15 @@
 
 #include <kiwi.fast.plugin_utility/code_conversion.h>
 #include <kiwi.fast.plugin_utility/exceptions.h>
+#include <kiwi.fast.plugin_utility/error_code.h>
 
 #include <kiwi.fast.model/detail/station_count.h>
+#include <kiwi.fast.model/detail/cengshen.h>
+#include <kiwi.fast.model/detail/tongcun.h>
+#include <kiwi.fast.model/detail/chongfu.h>
+#include <kiwi.fast.model/detail/tongguo.h>
 
 #include <kiwi.fast.utility/http_request.h>
-
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -23,64 +22,358 @@
 #include <cstdint>
 #include <string>
 
-bool statistic_station_count(std::string* error = nullptr)
+//发送站次数统计请求
+void statistic_station_count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code* ec = nullptr)
 {
-    KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER send_http_post_request<boost::beast::http::basic_string_body<char8_t>> send_http_post_request_(u8"127.0.0.1", u8"8911");
-
-    send_http_post_request_.set_target(u8"/station_count/query_condition");
-
-    KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_condition<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER station_count> query_condition_;
-    for(int year = 1952; year <= 1999; ++year)
+    try
     {
-        for(int month = 1; month <= 12; ++month)
+        KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER send_http_post_request<boost::beast::http::basic_string_body<char8_t>> send_http_post_request_(u8"127.0.0.1", u8"8911");
+
+        send_http_post_request_.set_target(u8"/station_count/query_condition");
+
+        KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_condition<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER station_count> query_condition_;
+        for(int year = 2005; year <= 2020; ++year)
         {
+            for(int month = 1; month <= 12; ++month)
             {
-                int element = 0;
-                int interval = 2;
-                query_condition_.add(year, month, element, interval);
-            }
+                {
+                    int element = 0;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
 
-            {
-                int element = 0;
-                int interval = 5;
-                query_condition_.add(year, month, element, interval);
-            }
+                {
+                    int element = 0;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
 
-            {
-                int element = 1;
-                int interval = 2;
-                query_condition_.add(year, month, element, interval);
-            }
+                {
+                    int element = 1;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
 
+                {
+                    int element = 1;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
+            }
+        }
+
+        boost::property_tree::wptree tree;
+        query_condition_.to_property_tree(tree);
+        std::wstringstream wsstream;
+        boost::property_tree::write_xml(wsstream, tree);
+        send_http_post_request_.set_body(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(wsstream.str()));
+
+        if(!send_http_post_request_())
+        {
+            if(ec != nullptr)
             {
-                int element = 1;
-                int interval = 5;
-                query_condition_.add(year, month, element, interval);
+                *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::request_send_error;
+            }
+            else
+            {
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送HTTP请求失败");
             }
         }
     }
-
-    boost::property_tree::wptree tree;
-    query_condition_.to_property_tree(tree);
-    std::wstringstream wsstream;
-    boost::property_tree::write_xml(wsstream, tree);
-    send_http_post_request_.set_body(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_utf8(wsstream.str()));
-
-    if(!send_http_post_request_())
+    catch(...)
     {
-        KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送HTTP请求失败");
+        if(ec != nullptr)
+        {
+            *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::exception;
+        }
+        else
+        {
+            throw;
+        }
+    }
+}
+
+//发送层深统计请求
+void statistic_cengshen(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code* ec = nullptr)
+{
+    try
+    {
+        KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER send_http_post_request<boost::beast::http::basic_string_body<char8_t>> send_http_post_request_(u8"127.0.0.1", u8"8911");
+
+        send_http_post_request_.set_target(u8"/cengshen/query_condition");
+
+        KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_condition<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER cengshen> query_condition_;
+        for(int year = 1772; year <= 2020; ++year)
+        {
+            for(int month = 1; month <= 12; ++month)
+            {
+                {
+                    int element = 0;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 0;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 1;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 1;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
+            }
+        }
+
+        boost::property_tree::wptree tree;
+        query_condition_.to_property_tree(tree);
+        std::wstringstream wsstream;
+        boost::property_tree::write_xml(wsstream, tree);
+        send_http_post_request_.set_body(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(wsstream.str()));
+
+        if(!send_http_post_request_())
+        {
+            if(ec != nullptr)
+            {
+                *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::request_send_error;
+            }
+            else
+            {
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送HTTP请求失败");
+            }
+        }
+    }
+    catch(...)
+    {
+        if(ec != nullptr)
+        {
+            *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::exception;
+        }
+        else
+        {
+            throw;
+        }
+    }
+}
+
+//发送同存统计请求
+void statistic_tongcun(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code* ec = nullptr)
+{
+    try
+    {
+        KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER send_http_post_request<boost::beast::http::basic_string_body<char8_t>> send_http_post_request_(u8"127.0.0.1", u8"8911");
+
+        send_http_post_request_.set_target(u8"/tongcun/query_condition");
+
+        KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_condition<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER tongcun> query_condition_;
+        for(int year = 1772; year <= 2020; ++year)
+        {
+            for(int month = 1; month <= 12; ++month)
+            {
+                {
+                    int interval = 2;
+                    query_condition_.add(year, month, interval);
+                }
+
+                {
+                    int interval = 5;
+                    query_condition_.add(year, month, interval);
+                }
+            }
+        }
+
+        boost::property_tree::wptree tree;
+        query_condition_.to_property_tree(tree);
+        std::wstringstream wsstream;
+        boost::property_tree::write_xml(wsstream, tree);
+        send_http_post_request_.set_body(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(wsstream.str()));
+
+        if(!send_http_post_request_())
+        {
+            if(ec != nullptr)
+            {
+                *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::request_send_error;
+            }
+            else
+            {
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送HTTP请求失败");
+            }
+        }
+    }
+    catch(...)
+    {
+        if(ec != nullptr)
+        {
+            *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::exception;
+        }
+        else
+        {
+            throw;
+        }
+    }
+}
+
+//发送重复率统计请求
+void statistic_chongfu(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code* ec = nullptr)
+{
+    try
+    {
+        KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER send_http_post_request<boost::beast::http::basic_string_body<char8_t>> send_http_post_request_(u8"127.0.0.1", u8"8911");
+
+        send_http_post_request_.set_target(u8"/chongfu/query_condition");
+
+        KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_condition<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER chongfu> query_condition_;
+        for(int year = 1772; year <= 2020; ++year)
+        {
+            for(int month = 1; month <= 12; ++month)
+            {
+                {
+                    int element = 0;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 0;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 1;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 1;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
+            }
+        }
+
+        boost::property_tree::wptree tree;
+        query_condition_.to_property_tree(tree);
+        std::wstringstream wsstream;
+        boost::property_tree::write_xml(wsstream, tree);
+        send_http_post_request_.set_body(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(wsstream.str()));
+
+        if(!send_http_post_request_())
+        {
+            if(ec != nullptr)
+            {
+                *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::request_send_error;
+            }
+            else
+            {
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送HTTP请求失败");
+            }
+        }
+    }
+    catch(...)
+    {
+        if(ec != nullptr)
+        {
+            *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::exception;
+        }
+        else
+        {
+            throw;
+        }
+    }
+}
+
+//发送通过率统计请求
+void statistic_tongguo(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code* ec = nullptr)
+{
+    try
+    {
+        KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER send_http_post_request<boost::beast::http::basic_string_body<char8_t>> send_http_post_request_(u8"127.0.0.1", u8"8911");
+
+        send_http_post_request_.set_target(u8"/tongguo/query_condition");
+
+        KIWI_FAST_MODEL_NAMESPACE_QUALIFIER query_condition<KIWI_FAST_MODEL_NAMESPACE_QUALIFIER tongguo> query_condition_;
+        for(int year = 1772; year <= 2020; ++year)
+        {
+            for(int month = 1; month <= 12; ++month)
+            {
+                //
+                {
+                    int element = 0;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 0;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 1;
+                    int interval = 2;
+                    query_condition_.add(year, month, element, interval);
+                }
+
+                {
+                    int element = 1;
+                    int interval = 5;
+                    query_condition_.add(year, month, element, interval);
+                }
+            }
+        }
+
+        boost::property_tree::wptree tree;
+        query_condition_.to_property_tree(tree);
+        std::wstringstream wsstream;
+        boost::property_tree::write_xml(wsstream, tree);
+        send_http_post_request_.set_body(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(wsstream.str()));
+
+        if(!send_http_post_request_())
+        {
+            if(ec != nullptr)
+            {
+                *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::request_send_error;
+            }
+            else
+            {
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"发送HTTP请求失败");
+            }
+        }
+    }
+    catch(...)
+    {
+        if(ec != nullptr)
+        {
+            *ec = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER error_code_value::exception;
+        }
+        else
+        {
+            throw;
+        }
     }
 }
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
-    boost::program_options::options_description options_description_(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"所有选项"), 500);
+    boost::program_options::options_description options_description_(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"所有选项"), 500);
+
 
     /* 选项信息的字符长度是有限制的，因为太长会自动换行，导致截断换行输出乱码 */
     options_description_.add_options()
             //
-            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"help").c_str()
-             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(u8"帮助信息").c_str());
+            (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"help").c_str()
+             , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"帮助信息").c_str());
 
     /* 注意设置std::wstring类型选项的默认值时只能使用带两个参数的default_value函数 */
 
@@ -109,5 +402,15 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     */
     boost::program_options::store(pr, variables_map_);
 
-    statistic_station_count();
+    boost::program_options::notify(variables_map_);
+
+    if(variables_map_.count(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"help")))
+    {
+        std::cout << options_description_ << '\n';
+        return 0;
+    }
+
+    statistic_tongcun();
+
+    return 0;
 }

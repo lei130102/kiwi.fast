@@ -19,13 +19,13 @@ class send_http_post_request
 public:
     send_http_post_request(std::u8string const& host, std::u8string const& port)
     {
-        m_host = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(host);
-        m_port = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(port);
+        m_host = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(host);
+        m_port = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(port);
     }
 
     void set_target(std::u8string const& target)
     {
-        m_target = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(target);
+        m_target = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(target);
     }
 
     void set_body(typename Body::value_type const& value)

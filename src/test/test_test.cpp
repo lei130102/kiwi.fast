@@ -14,7 +14,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     char** argv_ = new char*[argc];
     for(int i = 0; i < argc; ++i)
     {
-        argv_[i] = strdup(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER to_local(argv[i]).c_str());
+        argv_[i] = strdup(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(argv[i]).c_str());
     }
 
     return ::boost::unit_test::unit_test_main( &init_unit_test, argc, argv_ );

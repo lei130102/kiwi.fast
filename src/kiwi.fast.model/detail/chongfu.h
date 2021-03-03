@@ -22,26 +22,10 @@ KIWI_FAST_OPEN_MODEL_NAMESPACE
 
 namespace detail
 {
-    struct station_count;
-
-    //暂时没用
-//    template<>
-//    struct task_parameter<station_count>
-//    {
-//        //年 1990-1990年
-//        int year;
-//        //月 1-一月
-//        int month;
-//        //要素 0-温度 1-盐度
-//        int element;
-//        //分辨率 2-2° 5-5°
-//        int interval;
-//        //数据库文件路径
-//        std::vector<std::wstring> db_path;
-//    };
+    struct chongfu;
 
     template<>
-    struct query_condition<station_count>
+    struct query_condition<chongfu>
     {
         struct item_type
         {
@@ -59,7 +43,7 @@ namespace detail
     };
 
     template<>
-    struct query_result<station_count>
+    struct query_result<chongfu>
     {
         struct item_type
         {
@@ -75,40 +59,30 @@ namespace detail
             double lat;
             //方区左上角经度
             double lon;
-            //站次数
-            std::uint64_t count;
+            //重复个数
+            std::uint64_t chongfu_count;
+            //总个数
+            std::uint64_t total_count;
         };
 
         std::vector<item_type> items;
     };
 }
 
-struct station_count;
-
-//暂时没用
-//template<>
-//class task_parameter<station_count> : protected detail::task_parameter<detail::station_count>
-//{
-//public:
-//    using base_type = detail::task_parameter<detail::station_count>;
-
-//public:
-//    task_parameter(int year, int month, int element, int interval, std::vector<std::wstring> const& db_path)
-//        : base_type{year, month, element, interval, db_path}
-//    {}
-//};
+struct chongfu;
 
 template<>
-class query_condition<station_count> : protected detail::query_condition<detail::station_count>
+class query_condition<chongfu> : protected detail::query_condition<detail::chongfu>
 {
 public:
-    using base_type = detail::query_condition<detail::station_count>;
+    using base_type = detail::query_condition<detail::chongfu>;
 
 public:
     query_condition()
     {
         //注意对结构体的初始化
     }
+
     void add(int year, int month, int element, int interval)
     {
         items.push_back(item_type{year, month, element, interval});
@@ -156,11 +130,11 @@ public:
 };
 
 template<>
-class query_result<station_count> : protected detail::query_result<detail::station_count>
+class query_result<chongfu> : protected detail::query_result<detail::chongfu>
 {
 public:
-    using base_type = detail::query_result<detail::station_count>;
-    using this_type = query_result<station_count>;
+    using base_type = detail::query_result<detail::chongfu>;
+    using this_type = query_result<chongfu>;
 
 public:
     query_result()
@@ -168,9 +142,9 @@ public:
         //注意对结构体的初始化
     }
 
-    void add(int year, int month, int element, int interval, double lat, double lon, std::uint64_t count)
+    void add(int year, int month, int element, int interval, double lat, double lon, std::uint64_t chongfu_count, std::uint64_t total_count)
     {
-        items.push_back(item_type{year, month, element, interval, lat, lon, count});
+        items.push_back(item_type{year, month, element, interval, lat, lon, chongfu_count, total_count});
     }
 
     std::size_t size()
@@ -210,7 +184,8 @@ public:
             child.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"interval"), item.interval);
             child.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"lat"), item.lat);
             child.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"lon"), item.lon);
-            child.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"count"), item.count);
+            child.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"chongfu_count"), item.chongfu_count);
+            child.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"total_count"), item.total_count);
             tree.add_child(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"query_result.item"), child);
         }
     }
@@ -231,7 +206,8 @@ public:
                 ,v.second.get<int>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"interval"))
                 ,v.second.get<double>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"lat"))
                 ,v.second.get<double>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"lon"))
-                ,v.second.get<std::uint64_t>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"count"))
+                ,v.second.get<std::uint64_t>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"chongfu_count"))
+                ,v.second.get<std::uint64_t>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"total_count"))
                 );
         }
     }
@@ -241,7 +217,7 @@ public:
     {
         for(auto const& item : items)
         {
-            std::bind(f, item.year, item.month, item.element, item.interval, item.lat, item.lon, item.count, args...)();
+            std::bind(f, item.year, item.month, item.element, item.interval, item.lat, item.lon, item.chongfu_count, item.total_count, args...)();
         }
     }
 
@@ -260,8 +236,10 @@ public:
 
     static void add_count(this_type::item_type& item, this_type::item_type const& count_item)
     {
-        item.count += count_item.count;
+        item.chongfu_count += count_item.chongfu_count;
+        item.total_count += count_item.total_count;
     }
 };
 
 KIWI_FAST_CLOSE_MODEL_NAMESPACE
+
