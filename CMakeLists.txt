@@ -1,6 +1,9 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 2.8)
 
-if(MSVC)
+set(MSYS64 ON)
+
+if(MSYS64)
+else()
     set(VCPKG_CMAKE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
     set(VCPKG_TARGET_TRIPLET "x64-windows")
     set(CMAKE_TOOLCHAIN_FILE ${VCPKG_CMAKE})
@@ -8,12 +11,11 @@ endif()
 
 project(kiwi.fast)
 
-if(MSVC)
+if(MSYS64)
+    set(CMAKE_MODULE_PATH "${${PROJECT_NAME}_SOURCE_DIR}/cmake/CMakeModules;${CMAKE_MODULE_PATH}")
+else()
     set(CMAKE_MODULE_PATH "${${PROJECT_NAME}_SOURCE_DIR}/cmake/CMakeModules;$ENV{VCPKG_ROOT};${CMAKE_MODULE_PATH}")
     set(CMAKE_PREFIX_PATH "$ENV{QTVCPKG};$ENV{VCPKG_ROOT};${CMAKE_PREFIX_PATH}")
-else()
-    set(CMAKE_MODULE_PATH "${${PROJECT_NAME}_SOURCE_DIR}/cmake/CMakeModules;${CMAKE_MODULE_PATH}")
-    set(CMAKE_PREFIX_PATH "$ENV{QTVCPKG};${CMAKE_PREFIX_PATH}")
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -27,7 +29,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-if(MSVC)
+if(MSYS64)
+else()
 	add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
 	add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
@@ -72,7 +75,20 @@ set(TEST_BINARY_DIR ${BINARY_DIR}/test)
 
 #####
 
+message(STATUS "BOOST_ROOT                              =${BOOST_ROOT}")
+message(STATUS "BOOST_INCLUDEDIR                        =${BOOST_INCLUDEDIR}")
+message(STATUS "BOOST_LIBRARYDIR                        =${BOOST_LIBRARYDIR}")
+
 find_package(Boost REQUIRED COMPONENTS locale thread log program_options filesystem context)
+
+message(STATUS "Boost_INCLUDE_DIRS                      =${Boost_INCLUDE_DIRS}")
+message(STATUS "Boost_CONTEXT_LIBRARY                   =${Boost_CONTEXT_LIBRARY}")
+message(STATUS "Boost_LOCALE_LIBRARY                    =${Boost_LOCALE_LIBRARY}")
+message(STATUS "Boost_THREAD_LIBRARY                    =${Boost_THREAD_LIBRARY}")
+message(STATUS "Boost_LOG_SETUP_LIBRARY                 =${Boost_LOG_SETUP_LIBRARY}")
+message(STATUS "Boost_LOG_LIBRARY                       =${Boost_LOG_LIBRARY}")
+message(STATUS "Boost_PROGRAM_OPTIONS_LIBRARY           =${Boost_PROGRAM_OPTIONS_LIBRARY}")
+message(STATUS "Boost_FILESYSTEM_LIBRARY                =${Boost_FILESYSTEM_LIBRARY}")
 
 #find_package(Qt5 COMPONENTS Core Gui Widgets PrintSupport Xml OpenGL Concurrent REQUIRED)
 
@@ -141,13 +157,6 @@ message(STATUS "KIWI.FAST.CLIENT_BINARY_DIR             =${KIWI.FAST.CLIENT_BINA
 message(STATUS "TEST_SOURCE_DIR                         =${TEST_SOURCE_DIR}")
 message(STATUS "TEST_BINARY_DIR                         =${TEST_BINARY_DIR}")
 
-message(STATUS "Boost_CONTEXT_LIBRARY                   =${Boost_CONTEXT_LIBRARY}")
-message(STATUS "Boost_LOCALE_LIBRARY                    =${Boost_LOCALE_LIBRARY}")
-message(STATUS "Boost_THREAD_LIBRARY                    =${Boost_THREAD_LIBRARY}")
-message(STATUS "Boost_LOG_SETUP_LIBRARY                 =${Boost_LOG_SETUP_LIBRARY}")
-message(STATUS "Boost_LOG_LIBRARY                       =${Boost_LOG_LIBRARY}")
-message(STATUS "Boost_PROGRAM_OPTIONS_LIBRARY           =${Boost_PROGRAM_OPTIONS_LIBRARY}")
-message(STATUS "Boost_FILESYSTEM_LIBRARY                =${Boost_FILESYSTEM_LIBRARY}")
 
 #####
 

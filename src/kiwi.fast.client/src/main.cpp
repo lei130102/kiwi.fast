@@ -368,7 +368,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
     boost::program_options::options_description options_description_(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"所有选项"), 500);
 
-
     /* 选项信息的字符长度是有限制的，因为太长会自动换行，导致截断换行输出乱码 */
     options_description_.add_options()
             //

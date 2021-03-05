@@ -2305,7 +2305,8 @@ private:
         //为每个请求消息构造一个新的解析器
         m_parser.emplace();
 
-        //这个好像有问题 m_parser->body_limit(std::numeric_limits<std::uint64_t>::max());
+        //取消限制body大小
+        m_parser->body_limit(boost::none);
 
         //设置超时时间
         m_stream.expires_after(std::chrono::seconds(20));
