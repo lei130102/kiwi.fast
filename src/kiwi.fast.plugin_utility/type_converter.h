@@ -69,9 +69,9 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
             return to_string<type__, char8_t>() + u8"*";                                     \
         }                                                                                    \
         template<>                                                                           \
-        inline std::basic_string<char8_t> to_string<std::deque<type__*>, char8_t>()         \
+        inline std::basic_string<char8_t> to_string<std::deque<type__*>, char8_t>()          \
         {                                                                                    \
-            return std::u8string(u8"std::deque<") + to_string<type__*, char8_t>() + u8">";  \
+            return std::u8string(u8"std::deque<") + to_string<type__*, char8_t>() + u8">";   \
         }                                                                                    \
     }                                                                                        \
     KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
@@ -86,8 +86,9 @@ TYPE_CONVERTER_TO_U8STRING(signed char, u8"signed char")
 TYPE_CONVERTER_TO_U8STRING(wchar_t, u8"wchar_t")
 TYPE_CONVERTER_TO_U8STRING(char8_t, u8"char8_t")
 
-//因为值与字符串转换中只提供std::string，所以这里也只提供std::string
 TYPE_CONVERTER_TO_U8STRING(std::string, u8"std::string")
+TYPE_CONVERTER_TO_U8STRING(std::wstring, u8"std::wstring")
+TYPE_CONVERTER_TO_U8STRING(std::u8string, u8"std::u8string")
 
 TYPE_CONVERTER_TO_U8STRING(short, u8"short")
 TYPE_CONVERTER_TO_U8STRING(unsigned short, u8"unsigned short")

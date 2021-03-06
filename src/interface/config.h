@@ -18,7 +18,7 @@ namespace kiwi_fast{
     inline namespace KIWI_FAST_VERSION_NAMESPACE{}
 }
 
-#define KIWI_FAST_OPEN_NAMESAPCE namespace kiwi_fast { inline namespace KIWI_FAST_VERSION_NAMESPACE {
+#define KIWI_FAST_OPEN_NAMESPACE namespace kiwi_fast { inline namespace KIWI_FAST_VERSION_NAMESPACE {
 #define KIWI_FAST_CLOSE_NAMESPACE }}
 
 #define KIWI_FAST_NAMESPACE kiwi_fast::KIWI_FAST_VERSION_NAMESPACE
