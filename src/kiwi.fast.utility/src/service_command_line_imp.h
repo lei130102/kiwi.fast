@@ -15,25 +15,27 @@ KIWI_FAST_OPEN_UTILITY_NAMESPACE
 class service_command_line_imp
 {
 public:
-    void add_option(std::u8string const& name, std::u8string const& description)
+    void add_option(const char* name, const char* description)
     {
         m_options_description.add_options()
-                (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(name).c_str()
-                 , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(description).c_str());
+                (name, description);
     }
 
-    void add_int_option(std::u8string const& name, std::u8string const& description)
+    void add_int_option(const char* name, const char* description)
     {
         m_options_description.add_options()
-                (KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(name).c_str()
-                 , boost::program_options::wvalue<int>()
-                 , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(description).c_str());
+                (name, boost::program_options::wvalue<int>(), description);
     }
 
     /* 注意设置std::wstring类型选项的默认值时只能使用带两个参数的default_value函数 */
 
-    //...
+    void add_double_option(const char* name, const char* description)
+    {
+        m_options_description.add_options()
+                (name, boost::program_options::wvalue<double>(), description);
+    }
 
+    //...
 
     void run(int argc, wchar_t* argv[], wchar_t* envp[])
     {
@@ -84,11 +86,10 @@ public:
 protected:
     service_command_line_imp()
         :m_options_description(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"所有选项"), 500)  //注意这里写死是500，所以描述信息不要长
-    {
+    {}
 
-    }
-
-    virtual ~service_command_line_imp(){}
+    virtual ~service_command_line_imp()
+    {}
 
     void do_run(int argc, wchar_t* argv[], wchar_t* envp[])
     {
@@ -137,5 +138,17 @@ private:
 
 KIWI_FAST_CLOSE_UTILITY_NAMESPACE
 
-#define SERVICE_COMMAND_LINE_ADAPTER_METHOD(imp_class)       \
+#define SERVICE_COMMAND_LINE_ADAPTER_METHOD(imp_class)                                                        \
+    void add_option(const char* name, const char* description)                                                \
+    {                                                                                                         \
+        imp_class::add_option(name, description);                                                             \
+    }                                                                                                         \
+    void add_int_option(const char* name, const char* description)                                            \
+    {                                                                                                         \
+        imp_class::add_int_option(name, description);                                                         \
+    }                                                                                                         \
+    void add_double_option(const char* name, const char* description)                                         \
+    {                                                                                                         \
+        imp_class::add_double_option(name, description);                                                      \
+    }
 

@@ -1,8 +1,6 @@
-#pragma once
+#include <kiwi.fast.utility/src/service_command_line_adapter.h>
 
 #include <kiwi.fast.utility/detail/config.h>
-
-#include <kiwi.fast.utility/src/service_command_line_adapter.h>
 
 KIWI_FAST_OPEN_UTILITY_NAMESPACE
 

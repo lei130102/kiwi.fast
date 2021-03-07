@@ -2,8 +2,15 @@
 
 #include <kiwi.fast.plugin_utility/detail/config.h>
 
+#include <kiwi.fast.plugin_utility/service_exe_run_mode.h>
+#include <kiwi.fast.plugin_utility/service_object_factory.h>
+#include <kiwi.fast.plugin_utility/service_command_line.h>
+#include <kiwi.fast.plugin_utility/service_setting.h>
+
 #include <string>
 #include <deque>
+#include <filesystem>
+#include <any>
 
 //类型与字符串之间的转换
 
@@ -102,8 +109,17 @@ TYPE_CONVERTER_TO_U8STRING(long long, u8"long long")
 TYPE_CONVERTER_TO_U8STRING(unsigned long long, u8"unsigned long long")
 
 //注意 std::uint64_t std::int64_t等只是类型别名
+//注意 std::size_t等只是类型别名
 
 TYPE_CONVERTER_TO_U8STRING(float, u8"float")
 TYPE_CONVERTER_TO_U8STRING(double, u8"double")
 
 TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(void, u8"void")
+
+TYPE_CONVERTER_TO_U8STRING(std::filesystem::path, u8"std::filesystem::path")
+TYPE_CONVERTER_TO_U8STRING(std::any, u8"std::any")
+
+TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_exe_run_mode, u8"service_exe_run_mode")
+TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_object_factory, u8"service_object_factory")
+TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_command_line, u8"service_command_line")
+TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_setting, u8"service_setting")

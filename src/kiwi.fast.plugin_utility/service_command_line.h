@@ -28,10 +28,10 @@ public:
     void add_option(std::basic_string<CharType> const& name, std::basic_string<CharType> const& description)
     {
         add_option(
-                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(name)
-                    , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(description));
+                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(name).c_str()
+                    , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(description).c_str());
     }
-    virtual void add_option(std::u8string const& name, std::u8string const& description) = 0;
+    virtual void add_option(const char* name, const char* description) = 0;
 
     /*!
      *
@@ -46,10 +46,28 @@ public:
     void add_int_option(std::basic_string<CharType> const& name, std::basic_string<CharType> const& description)
     {
         add_int_option(
-                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(name)
-                    , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(description));
+                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(name).c_str()
+                    , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(description).c_str());
     }
-    virtual void add_int_option(std::u8string const& name, std::u8string const& description) = 0;
+    virtual void add_int_option(const char* name, const char* description) = 0;
+
+    /*!
+     *
+     */
+    template<typename CharType>
+    void add_double_option(CharType const* name, CharType const* description)
+    {
+        add_double_option<CharType>(std::basic_string<CharType>(name)
+                                    , std::basic_string<CharType>(description));
+    }
+    template<typename CharType>
+    void add_double_option(std::basic_string<CharType> const& name, std::basic_string<CharType> const& description)
+    {
+        add_double_option(
+                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(name).c_str()
+                    , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(description).c_str());
+    }
+    virtual void add_double_option(const char* name, const char* description) = 0;
 };
 
 

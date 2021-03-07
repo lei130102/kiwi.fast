@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<kiwi.fast.setting>
+<kiwi_fast>
 	<index>1</index>
 	<item>
 		<name>server_address</name>
@@ -21,4 +21,4 @@
 		<type>int</type>
 		<value>1</value>
 	</item>
-</kiwi.fast.setting>
+</kiwi_fast>
