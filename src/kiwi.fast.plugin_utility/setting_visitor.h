@@ -1,0 +1,287 @@
+#pragma once
+
+#include <kiwi.fast.plugin_utility/detail/config.h>
+
+#include <kiwi.fast.plugin_utility/code_conversion.h>
+#include <kiwi.fast.plugin_utility/service.h>
+
+#include <kiwi.fast.plugin_utility/ptree_root.h>
+#include <kiwi.fast.plugin_utility/ptree_item.h>
+
+#include <string>
+#include <deque>
+
+KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
+
+class service_setting;
+
+class setting_visitor
+{
+    friend class service_setting;
+
+public:
+    using name_type = typename ptree_item::name_type;
+    using type_type = typename ptree_item::type_type;
+    using value_type = typename ptree_item::value_type;
+
+    setting_visitor()
+    {}
+
+    virtual ~setting_visitor()
+    {}
+
+    setting_visitor& operator()(const char8_t* name)
+    {
+        add_name(name);
+        return *this;
+    }
+
+    std::optional<name_type> name()
+    {
+        if(m_tmp)
+        {
+            auto ptree_item = find_setting_tmp_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //临时配置
+                return (*ptree_item).get().name;
+            }
+            else
+            {
+                return {};
+            }
+        }
+        else
+        {
+            auto ptree_item = find_setting_tmp_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //临时配置
+                return (*ptree_item).get().name;
+            }
+            else
+            {
+                auto ptree_item = find_setting_user_object_value_item(m_names);
+                if(ptree_item)
+                {
+                    //用户配置
+                    return (*ptree_item).get().name;
+                }
+                else
+                {
+                    auto ptree_item = find_setting_default_object_value_item(m_names);
+                    if(ptree_item)
+                    {
+                        //缺省配置
+                        return (*ptree_item).get().name;
+                    }
+                    else
+                    {
+                        return {};
+                    }
+                }
+            }
+        }
+    }
+
+    std::optional<type_type> type()
+    {
+        if(m_tmp)
+        {
+            auto ptree_item = find_setting_tmp_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //临时配置
+                return (*ptree_item).get().type;
+            }
+            else
+            {
+                return {};
+            }
+        }
+        else
+        {
+            auto ptree_item = find_setting_tmp_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //临时配置
+                return (*ptree_item).get().type;
+            }
+            else
+            {
+                auto ptree_item = find_setting_user_object_value_item(m_names);
+                if(ptree_item)
+                {
+                    //用户配置
+                    return (*ptree_item).get().type;
+                }
+                else
+                {
+                    auto ptree_item = find_setting_default_object_value_item(m_names);
+                    if(ptree_item)
+                    {
+                        //缺省配置
+                        return (*ptree_item).get().type;
+                    }
+                    else
+                    {
+                        return {};
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T>
+    std::optional<T*> value()
+    {
+        auto result = value();
+        if(result)
+        {
+            try {
+                return std::any_cast<T*>(*result);
+            }  catch (std::bad_any_cast& e) {
+                return {};
+            }
+        }
+        else
+        {
+            return {};
+        }
+    }
+
+    template<typename T>
+    T* value(T& default_value)
+    {
+        auto result = value();
+        if(result)
+        {
+            try {
+                return std::any_cast<T*>(*result);
+            }  catch (std::bad_any_cast& e) {
+                return &default_value;
+            }
+        }
+        else
+        {
+            return &default_value;
+        }
+    }
+    std::optional<value_type> value()
+    {
+        if(m_tmp)
+        {
+            auto ptree_item = find_setting_tmp_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //临时配置
+                return (*ptree_item).get().value;
+            }
+            else
+            {
+                return {};
+            }
+        }
+        else
+        {
+            auto ptree_item = find_setting_tmp_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //临时配置
+                return (*ptree_item).get().value;
+            }
+            else
+            {
+                auto ptree_item = find_setting_user_object_value_item(m_names);
+                if(ptree_item)
+                {
+                    //用户配置
+                    return (*ptree_item).get().value;
+                }
+                else
+                {
+                    auto ptree_item = find_setting_default_object_value_item(m_names);
+                    if(ptree_item)
+                    {
+                        //缺省配置
+                        return (*ptree_item).get().value;
+                    }
+                    else
+                    {
+                        return {};
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T>
+    bool set_value(T* value)
+    {
+        if(m_tmp)
+        {
+            auto ptree_item = find_setting_tmp_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //销毁之前的
+                service<service_object_factory> object_factory_service;
+                object_factory_service->destroy_object((*ptree_item).get().value, (*ptree_item).get().type);
+
+                //设置type和value
+                (*ptree_item).get().type = type_converter::to_string<T>();
+                (*ptree_item).get().value = value;
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            auto ptree_item = find_setting_user_object_value_item(m_names);
+            if(ptree_item)
+            {
+                //销毁之前的
+                service<service_object_factory> object_factory_service;
+                object_factory_service->destroy_object((*ptree_item).get().value, (*ptree_item).get().type);
+
+                //设置type和value
+                (*ptree_item).get().type = type_converter::to_string<T>();
+                (*ptree_item).get().value = value;
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+protected:
+
+    void add_name(std::u8string const& name)
+    {
+        m_names.push_back(name);
+    }
+
+    void set_tmp(bool is_tmp)
+    {
+        m_tmp = is_tmp;
+    }
+
+    std::optional<std::reference_wrapper<ptree_item>> find_setting_default_object_value_item(std::deque<std::u8string>& names);
+    std::optional<std::reference_wrapper<ptree_item>> find_setting_user_object_value_item(std::deque<std::u8string>& names);
+    std::optional<std::reference_wrapper<ptree_item>> find_setting_tmp_object_value_item(std::deque<std::u8string>& names);
+
+private:
+    std::deque<std::u8string> m_names;
+    bool m_tmp;
+
+    service<service_setting> setting_service;
+};
+
+KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
+

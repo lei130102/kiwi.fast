@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(MSYS64 ON)
+set(MSYS64 OFF)
 
 if(MSYS64)
+    set(LIB_DIR "D:/msys64/mingw64")
 else()
-    set(VCPKG_CMAKE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+    set(LIB_DIR "D:/OtherDocuments/vcpkg/vcpkg/installed/x64-windows")
+    set(VCPKG_CMAKE "${LIB_DIR}/../../scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
     set(VCPKG_TARGET_TRIPLET "x64-windows")
     set(CMAKE_TOOLCHAIN_FILE ${VCPKG_CMAKE})
 endif()
@@ -22,7 +24,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og -m64 -Wa,-mbig-obj")
+if(MSYS64)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Og -m64 -Wa,-mbig-obj")
+else()
+endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -75,6 +80,9 @@ set(TEST_BINARY_DIR ${BINARY_DIR}/test)
 
 #####
 
+set(BOOST_INCLUDEDIR ${LIB_DIR}/include)
+set(BOOST_LIBRARYDIR ${LIB_DIR}/lib)
+
 message(STATUS "BOOST_ROOT                              =${BOOST_ROOT}")
 message(STATUS "BOOST_INCLUDEDIR                        =${BOOST_INCLUDEDIR}")
 message(STATUS "BOOST_LIBRARYDIR                        =${BOOST_LIBRARYDIR}")
@@ -82,6 +90,7 @@ message(STATUS "BOOST_LIBRARYDIR                        =${BOOST_LIBRARYDIR}")
 find_package(Boost REQUIRED COMPONENTS locale thread log program_options filesystem context)
 
 message(STATUS "Boost_INCLUDE_DIRS                      =${Boost_INCLUDE_DIRS}")
+message(STATUS "Boost_LIBRARIES                         =${Boost_LIBRARIES}")
 message(STATUS "Boost_CONTEXT_LIBRARY                   =${Boost_CONTEXT_LIBRARY}")
 message(STATUS "Boost_LOCALE_LIBRARY                    =${Boost_LOCALE_LIBRARY}")
 message(STATUS "Boost_THREAD_LIBRARY                    =${Boost_THREAD_LIBRARY}")
@@ -166,4 +175,4 @@ add_subdirectory(${KIWI.FAST.MODEL_SOURCE_DIR})
 add_subdirectory(${KIWI.FAST.BATCH_SOURCE_DIR})
 add_subdirectory(${KIWI.FAST.SERVER_SOURCE_DIR})
 add_subdirectory(${KIWI.FAST.CLIENT_SOURCE_DIR})
-#add_subdirectory(${TEST_SOURCE_DIR})
+add_subdirectory(${TEST_SOURCE_DIR})

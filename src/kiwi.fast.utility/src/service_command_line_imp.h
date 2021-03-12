@@ -6,6 +6,8 @@
 
 #include <boost/program_options.hpp>
 
+#include <optional>
+
 KIWI_FAST_OPEN_UTILITY_NAMESPACE
 
 /*!

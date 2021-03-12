@@ -2,11 +2,6 @@
 
 #include <kiwi.fast.plugin_utility/detail/config.h>
 
-#include <kiwi.fast.plugin_utility/service_exe_run_mode.h>
-#include <kiwi.fast.plugin_utility/service_object_factory.h>
-#include <kiwi.fast.plugin_utility/service_command_line.h>
-#include <kiwi.fast.plugin_utility/service_setting.h>
-
 #include <string>
 #include <deque>
 #include <filesystem>
@@ -61,6 +56,10 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
     }                                                                                        \
     KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
 
+//带有FORWARD的宏用在类定义中使用type_converter::to_string函数的类的类型定义前
+#define TYPE_CONVERTER_TO_U8STRING_FORWARD(type__, u8string__)                               \
+    TYPE_CONVERTER_TO_U8STRING(type__, u8string__)
+
 #define TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(type__, u8string__)                              \
     KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE                                                  \
     namespace type_converter                                                                 \
@@ -82,6 +81,12 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
         }                                                                                    \
     }                                                                                        \
     KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
+
+//带有FORWARD的宏用在类定义中使用type_converter::to_string函数的类的类型定义前
+#define TYPE_CONVERTER_TO_U8STRING_NO_DEQUE_FORWARD(type__, u8string__)                      \
+    TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(type__, u8string__)
+
+//////////////
 
 TYPE_CONVERTER_TO_U8STRING(bool, u8"bool")
 
@@ -119,7 +124,3 @@ TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(void, u8"void")
 TYPE_CONVERTER_TO_U8STRING(std::filesystem::path, u8"std::filesystem::path")
 TYPE_CONVERTER_TO_U8STRING(std::any, u8"std::any")
 
-TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_exe_run_mode, u8"service_exe_run_mode")
-TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_object_factory, u8"service_object_factory")
-TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_command_line, u8"service_command_line")
-TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(service_setting, u8"service_setting")

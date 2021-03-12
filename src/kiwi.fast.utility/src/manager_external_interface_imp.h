@@ -8,6 +8,7 @@
 #include <kiwi.fast.utility/src/service_object_factory_adapter.h>
 #include <kiwi.fast.utility/src/service_command_line_adapter.h>
 #include <kiwi.fast.utility/src/service_setting_adapter.h>
+#include <kiwi.fast.utility/src/service_log_adapter.h>
 
 #include <string>
 
@@ -73,6 +74,10 @@ public:
         {
             *address = dynamic_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting*>(service_setting_adapter::instance());
         }
+        else if(std::u8string(name) == u8"service_log")
+        {
+            *address = dynamic_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_log*>(service_log_adapter::instance());
+        }
 
         if(*address != nullptr)
         {
@@ -100,6 +105,10 @@ public:
         else if(std::u8string(name) == u8"service_setting")
         {
             service_setting_adapter::destroy();
+        }
+        else if(std::u8string(name) == u8"service_log")
+        {
+            service_log_adapter::destroy();
         }
     }
 

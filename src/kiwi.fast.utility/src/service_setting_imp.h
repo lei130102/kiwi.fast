@@ -5,6 +5,10 @@
 #include <kiwi.fast.plugin_utility/code_conversion.h>
 #include <kiwi.fast.plugin_utility/type_converter.h>
 #include <kiwi.fast.plugin_utility/manager_module.h>
+#include <kiwi.fast.plugin_utility/ptree_root.h>
+#include <kiwi.fast.plugin_utility/resource_object_factory.h>
+#include <kiwi.fast.plugin_utility/service.h>
+#include <kiwi.fast.plugin_utility/service_setting.h>
 
 #include <kiwi.fast.utility/src/service_object_factory_adapter.h>
 
@@ -23,196 +27,76 @@ KIWI_FAST_OPEN_UTILITY_NAMESPACE
 class service_setting_imp
 {
 public:
-    /*!
-     * \brief The setting_item_type struct
-     * 配置项
-     */
-    struct setting_item_type
-    {
-        std::u8string name;//名称
-        std::u8string type;//类型
-        std::any value;//值
-    };
-
-    /*!
-     * 配置
-     */
-    using setting_type = std::map<std::u8string, setting_item_type>;//名称 配置项
-
-    using setting_index_type = int;
+    using setting_index_type = unsigned int;
     using setting_path_type = std::filesystem::path;
 
-    std::optional<std::any> setting(const char8_t* name) const
+    virtual KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root& setting_default()
     {
-        auto iter = m_setting_tmp.find(name);
-        if(iter != m_setting_tmp.end())
-        {
-            //临时配置
-            return iter->second.value;
-        }
-        else
-        {
-            iter = m_setting_user.find(name);
-            if(iter != m_setting_user.end())
-            {
-                //用户配置
-                return iter->second.value;
-            }
-            else
-            {
-                iter = m_setting_default.find(name);
-                if(iter != m_setting_default.end())
-                {
-                    //缺省配置
-                    return iter->second.value;
-                }
-            }
-        }
-        return {};
+        return m_setting_default;
     }
 
-    void set_setting(const char8_t* name, const char8_t* type, std::any const& value)
+    virtual KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root& setting_user()
     {
-        m_setting_user.insert(setting_type::value_type(name,
-                                                       setting_item_type{name
-                                                                        ,type
-                                                                        ,value}));
+        return m_setting_user;
     }
 
-    void set_tmp_setting(const char8_t* name, const char8_t* type, std::any const& value)
+    virtual KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root& setting_tmp()
     {
-        m_setting_tmp.insert(setting_type::value_type(name,
-                                                       setting_item_type{name
-                                                                        ,type
-                                                                        ,value}));
-    }
-
-    std::optional<std::filesystem::path> bin_dir_path() const
-    {
-        auto value = setting(u8"bin_dir_path");
-        if(value)
-        {
-            try {
-                return std::any_cast<std::filesystem::path const&>(*value);
-            }  catch (std::bad_any_cast& e) {
-            }
-        }
-        return {};
-    }
-
-    std::optional<std::filesystem::path> root_dir_path() const
-    {
-        auto value = setting(u8"root_dir_path");
-        if(value)
-        {
-            try {
-                return std::any_cast<std::filesystem::path const&>(*value);
-            }  catch (std::bad_any_cast& e) {
-            }
-        }
-        return {};
-    }
-
-    std::optional<std::filesystem::path> default_setting_dir_path() const
-    {
-        auto value = setting(u8"default_setting_dir_path");
-        if(value)
-        {
-            try {
-                return std::any_cast<std::filesystem::path const&>(*value);
-            }  catch (std::bad_any_cast& e) {
-            }
-        }
-        return {};
-    }
-
-    std::optional<std::filesystem::path> temp_dir_path() const
-    {
-        auto value = setting(u8"temp_dir_path");
-        if(value)
-        {
-            try {
-                return std::any_cast<std::filesystem::path const&>(*value);
-            }  catch (std::bad_any_cast& e) {
-            }
-        }
-        return {};
-    }
-
-    std::optional<std::filesystem::path> plugin_dir_path() const
-    {
-        auto value = setting(u8"plugin_dir_path");
-        if(value)
-        {
-            try {
-                return std::any_cast<std::filesystem::path const&>(*value);
-            }  catch (std::bad_any_cast& e) {
-            }
-        }
-        return {};
+        return m_setting_tmp;
     }
 
 protected:
     service_setting_imp()
     {
-        init_path();
+        //添加基本缺省信息(这些一般是系统启动才确定或者移动程序就会发生改变的信息，系统必需路径)
+        //add_basic_default_setting();
 
+        //加载缺省配置
         load_default_setting();
+
+        //加载用户配置
+
+        //导入临时配置
     }
 
     virtual ~service_setting_imp()
-    {}
+    {
+        //卸载缺省配置
+        unload_default_setting();
+
+        //卸载用户配置
+    }
 
     /*!
-     * \brief init_path
-     * 初始化路径信息
+     * \brief add_basic_default_setting
+     * 添加基本缺省信息(这些一般是系统启动才确定或者移动程序就会发生改变的信息)
      */
-    void init_path()
+    void add_basic_default_setting()
     {
-        std::filesystem::path bin_dir_path = std::filesystem::current_path();
-        {
-            setting_item_type value{u8"bin_dir_path"
-                              , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<std::filesystem::path>()
-                              , std::any(bin_dir_path) };
-            m_setting_default.insert(setting_type::value_type(value.name, value));
-        }
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> bin_dir_path;
+        *bin_dir_path = std::filesystem::current_path();
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"bin_dir_path", bin_dir_path.release()));
 
-        std::filesystem::path root_dir_path = bin_dir_path.parent_path();
-        {
-            setting_item_type value{u8"root_dir_path"
-                              , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<std::filesystem::path>()
-                              , std::any(root_dir_path) };
-            m_setting_default.insert(setting_type::value_type(value.name, value));
-        }
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> root_dir_path;
+        *root_dir_path = bin_dir_path->parent_path();
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"root_dir_path", root_dir_path.release()));
 
-        std::filesystem::path default_setting_dir_path = root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"default_setting"));
-        {
-            setting_item_type value{u8"default_setting_dir_path"
-                              , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<std::filesystem::path>()
-                              , std::any(default_setting_dir_path) };
-            m_setting_default.insert(setting_type::value_type(value.name, value));
-        }
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> default_setting_dir_path;
+        *default_setting_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"default_setting"));
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"default_setting_dir_path", default_setting_dir_path.release()));
 
-        std::filesystem::path temp_dir_path = root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"temp"));
-        {
-            setting_item_type value{u8"temp_dir_path"
-                              , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<std::filesystem::path>()
-                              , std::any(temp_dir_path) };
-            m_setting_default.insert(setting_type::value_type(value.name, value));
-        }
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> temp_dir_path;
+        *temp_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"temp"));
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"temp_dir_path", temp_dir_path.release()));
 
-        std::filesystem::path plugin_dir_path = root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"plugin"));
-        {
-            setting_item_type value{u8"plugin_dir_path"
-                              , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<std::filesystem::path>()
-                              , std::any(plugin_dir_path) };
-            m_setting_default.insert(setting_type::value_type(value.name, value));
-        }
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> plugin_dir_path;
+        *plugin_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"plugin"));
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"plugin_dir_path", plugin_dir_path.release()));
     }
 
     struct setting_index_less
     {
-        bool operator()(std::pair<setting_index_type, std::wstring> const& lhs, std::pair<setting_index_type, std::wstring> const& rhs)
+        bool operator()(std::pair<setting_index_type, setting_path_type> const& lhs, std::pair<setting_index_type, setting_path_type> const& rhs)
         {
             if(lhs.first < rhs.first)
             {
@@ -231,28 +115,11 @@ protected:
      * \param file_info
      * \param setting
      */
-    void parse_setting_file(std::pair<setting_index_type, setting_path_type> const& file_info, setting_type& setting)
+    void parse_setting_file(std::pair<setting_index_type, setting_path_type> const& file_info, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root& setting)
     {
-        service_object_factory_imp* service_object_factory_imp_ = nullptr;
-        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER manager_module::instance()->external_interface_manager()->query(
-                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_object_factory>()
-                    , reinterpret_cast<void**>(&service_object_factory_imp_));
-        if(!service_object_factory_imp_)
-        {
-            return;
-        }
-
-        boost::property_tree::wptree tree;
+        boost::property_tree::ptree tree;
         boost::property_tree::read_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(file_info.second.native()), tree);
-
-        for(auto const& v : tree.get_child(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"kiwi_fast.item")))
-        {
-            std::u8string name = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(v.second.get<std::wstring>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"name")));
-            std::u8string type = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(v.second.get<std::wstring>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"type")));
-            std::u8string value = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(v.second.get<std::wstring>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"value")));
-
-            //service_object_factory_imp_->create_object(type.c_str());
-        }
+        setting = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::from_ptree(tree);
     }
 
     /*!
@@ -263,22 +130,29 @@ protected:
     {
         std::deque<std::pair<setting_index_type, setting_path_type>> default_setting_file_info;
 
-        auto default_setting_dir = default_setting_dir_path();
-        if(default_setting_dir)
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting> setting_service;
+        auto default_setting_dir_path = setting_service->default_setting_dir_path();
+        if(default_setting_dir_path)
         {
             std::filesystem::directory_iterator end;
-            for(std::filesystem::directory_iterator iter(*default_setting_dir); iter != end; ++iter)
+            for(std::filesystem::directory_iterator iter(**default_setting_dir_path); iter != end; ++iter)
             {
                 if(std::filesystem::is_regular_file(*iter))
                 {
                     //日志输出
                     //std::wstring setting_path = iter->path().native();
 
-                    boost::property_tree::wptree tree;
+                    boost::property_tree::ptree tree;
                     boost::property_tree::read_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(iter->path().native()), tree);
 
-                    setting_index_type setting_index = tree.get<setting_index_type>(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"kiwi_fast.index"), 999);
-                    default_setting_file_info.push_back(std::make_pair(setting_index, iter->path()));
+                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root tmp = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::from_ptree(tree);
+
+                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_visitor tmp_visitor(&tmp);
+                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<setting_index_type> default_index;
+                    *default_index = 999;
+                    setting_index_type* setting_index = tmp_visitor(u8"kiwi_fast_index").value<setting_index_type>(*default_index);
+
+                    default_setting_file_info.push_back(std::make_pair(*setting_index, iter->path()));
                 }
             }
         }
@@ -293,45 +167,42 @@ protected:
         });
     }
 
+    /*!
+     * \brief unload_default_setting
+     * 卸载缺省配置
+     */
+    void unload_default_setting()
+    {
+//        service_object_factory_imp* service_object_factory_imp_ = nullptr;
+//        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER manager_module::instance()->external_interface_manager()->query(
+//                    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_object_factory>()
+//                    , reinterpret_cast<void**>(&service_object_factory_imp_));
+//        if(!service_object_factory_imp_)
+//        {
+//            return;
+//        }
+
+//        m_setting_default.clear();
+    }
 
 private:
-    setting_type m_setting_default;      //缺省配置
-    setting_type m_setting_user;         //用户配置
-    setting_type m_setting_tmp;          //临时配置
+    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root m_setting_default;      //缺省配置
+    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root m_setting_user;         //用户配置
+    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root m_setting_tmp;          //临时配置
 };
 
 KIWI_FAST_CLOSE_UTILITY_NAMESPACE
 
 #define SERVICE_SETTING_ADAPTER_METHOD(imp_class)                                                              \
-    std::optional<std::any> setting(const char8_t* name) const                                                 \
+    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root& setting_default()                                 \
     {                                                                                                          \
-        return imp_class::setting(name);                                                                       \
+        return imp_class::setting_default();                                                                   \
     }                                                                                                          \
-    void set_setting(const char8_t* name, const char8_t* type, std::any const& value)                          \
+    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root& setting_user()                                    \
     {                                                                                                          \
-        imp_class::set_setting(name, type, value);                                                             \
+        return imp_class::setting_user();                                                                      \
     }                                                                                                          \
-    void set_tmp_setting(const char8_t* name, const char8_t* type, std::any const& value)                      \
+    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root& setting_tmp()                                     \
     {                                                                                                          \
-        imp_class::set_tmp_setting(name, type, value);                                                         \
-    }                                                                                                          \
-    std::optional<std::filesystem::path> bin_dir_path() const                                                  \
-    {                                                                                                          \
-        return imp_class::bin_dir_path();                                                                      \
-    }                                                                                                          \
-    std::optional<std::filesystem::path> root_dir_path() const                                                 \
-    {                                                                                                          \
-        return imp_class::root_dir_path();                                                                     \
-    }                                                                                                          \
-    std::optional<std::filesystem::path> default_setting_dir_path() const                                      \
-    {                                                                                                          \
-        return imp_class::default_setting_dir_path();                                                          \
-    }                                                                                                          \
-    std::optional<std::filesystem::path> temp_dir_path() const                                                 \
-    {                                                                                                          \
-        return imp_class::temp_dir_path();                                                                     \
-    }                                                                                                          \
-    std::optional<std::filesystem::path> plugin_dir_path() const                                               \
-    {                                                                                                          \
-        return imp_class::plugin_dir_path();                                                                   \
+        return imp_class::setting_tmp();                                                                       \
     }

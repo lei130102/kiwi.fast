@@ -88,7 +88,7 @@ public:
     static void throw_(const char* file, std::size_t line, std::u8string const& descr)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
-        boost::throw_exception(runtime_error(descr_) << boost::throw_file(file) << boost::throw_line(line));
+        boost::throw_exception(runtime_error(descr_) << what_info(descr) << boost::throw_file(file) << boost::throw_line(line));
     }
 };
 
@@ -112,7 +112,7 @@ public:
     static void throw_(const char* file, std::size_t line, std::u8string const& descr)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
-        boost::throw_exception(logic_error(descr_) << boost::throw_file(file) << boost::throw_line(line));
+        boost::throw_exception(logic_error(descr_) << what_info(descr)  << boost::throw_file(file) << boost::throw_line(line));
     }
 };
 
@@ -152,13 +152,13 @@ public:
     static void throw_(const char* file, std::size_t line, std::u8string const& descr, std::error_code ec)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
-        boost::throw_exception(system_error(ec, descr_) << boost::throw_file(file) << boost::throw_line(line));
+        boost::throw_exception(system_error(ec, descr_) << what_info(descr) << boost::throw_file(file) << boost::throw_line(line));
     }
 
     static void throw_(const char* file, std::size_t line, std::u8string const& descr, int ev, std::error_category const& ecat)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
-        boost::throw_exception(system_error(ev, ecat, descr_) << boost::throw_file(file) << boost::throw_line(line));
+        boost::throw_exception(system_error(ev, ecat, descr_) << what_info(descr) << boost::throw_file(file) << boost::throw_line(line));
     }
 };
 

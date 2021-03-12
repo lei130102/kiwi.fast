@@ -4,13 +4,13 @@ function(add_test test_name test_file)
     )
 
     target_include_directories(${test_name} PRIVATE ${Boost_INCLUDE_DIRS})
-    target_link_libraries(${test_name} PRIVATE kiwi.fast.plugin_utility ${Boost_LIBRARIES})
+    target_link_libraries(${test_name} PRIVATE kiwi.fast.utility kiwi.fast.plugin_utility ${Boost_LIBRARIES})
 
     if(MSVC)
-        target_compile_options(kiwi.fast.plugin_utility PUBLIC /source-charset:utf-8)
+        target_compile_options(${test_name} PUBLIC /source-charset:utf-8)
     else()
-        target_compile_options(kiwi.fast.plugin_utility PUBLIC -municode)
-        target_link_options(kiwi.fast.plugin_utility PUBLIC -municode)
+        target_compile_options(${test_name} PUBLIC -municode)
+        target_link_options(${test_name} PUBLIC -municode)
     endif()
 
     set_target_properties(${test_name} PROPERTIES OUTPUT_NAME "${test_name}$<$<CONFIG:Debug>:_d>")
@@ -24,13 +24,16 @@ function(add_test test_name test_file)
 
 endfunction(add_test)
 
+add_test(test_example
+    "${CMAKE_CURRENT_SOURCE_DIR}/test_example.cpp")
+
 add_test(test_test
     "${CMAKE_CURRENT_SOURCE_DIR}/test_test.cpp")
 
-add_test(test_code_convert
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_code_convert.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_code_convert.h"
-    )
+#add_test(test_code_convert
+#    "${CMAKE_CURRENT_SOURCE_DIR}/test_code_convert.cpp"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/test_code_convert.h"
+#    )
 
-add_test(test_exception
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_exception.cpp")
+#add_test(test_exception
+#    "${CMAKE_CURRENT_SOURCE_DIR}/test_exception.cpp")

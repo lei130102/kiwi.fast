@@ -24,6 +24,10 @@ else()
     target_link_options(kiwi.fast.utility PUBLIC -municode)
 endif()
 
+target_include_directories(kiwi.fast.utility PUBLIC ${Boost_INCLUDE_DIRS})
+
+target_link_libraries(kiwi.fast.utility PUBLIC ${Boost_LIBRARIES})
+
 set_target_properties(kiwi.fast.utility PROPERTIES OUTPUT_NAME "kiwi.fast.utility$<$<CONFIG:Debug>:_d>")
 
 set_target_properties(kiwi.fast.utility PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/${BUILD_RUNTIME_DIR}")

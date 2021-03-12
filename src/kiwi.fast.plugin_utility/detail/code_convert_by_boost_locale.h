@@ -228,31 +228,38 @@ namespace detail
             }
         }
 
-        ///UTF-16编码(wchar_t)到UTF-8编码(char)
-        inline std::string to_utf8_string(std::wstring const& str)
+        //其他到UTF-8编码(char)
+        template<typename CharTypeIn>
+        inline std::string to_utf8_string(std::basic_string<CharTypeIn> const& str)
         {
-            return boost::locale::conv::utf_to_utf<char, wchar_t>(str);
+            return boost::locale::conv::utf_to_utf<char, CharTypeIn>(str);
         }
-        inline std::string to_utf8_string(wchar_t const* begin, wchar_t const* end)
+        template<typename CharTypeIn>
+        inline std::string to_utf8_string(CharTypeIn const* begin, CharTypeIn const* end)
         {
-            return boost::locale::conv::utf_to_utf<char, wchar_t>(begin, end);
+            return boost::locale::conv::utf_to_utf<char, CharTypeIn>(begin, end);
         }
-        inline std::string to_utf8_string(wchar_t const* text)
+        template<typename CharTypeIn>
+        inline std::string to_utf8_string(CharTypeIn const* text)
         {
-            return boost::locale::conv::utf_to_utf<char, wchar_t>(text);
+            return boost::locale::conv::utf_to_utf<char, CharTypeIn>(text);
         }
-        ///UTF-16编码(char16_t)到UTF-8编码(char)
-        inline std::string to_utf8_string(std::u8string const& str)
+
+        //UTF-8编码(char)到其他
+        template<typename CharTypeOut>
+        inline std::basic_string<CharTypeOut> from_utf8_string(std::string const& str)
         {
-            return boost::locale::conv::utf_to_utf<char, char8_t>(str);
+            return boost::locale::conv::utf_to_utf<CharTypeOut, char>(str);
         }
-        inline std::string to_utf8_string(char8_t const* begin, char8_t const* end)
+        template<typename CharTypeOut>
+        inline std::basic_string<CharTypeOut> from_utf8_string(char const* begin, char const* end)
         {
-            return boost::locale::conv::utf_to_utf<char, char8_t>(begin, end);
+            return boost::locale::conv::utf_to_utf<CharTypeOut, char>(begin, end);
         }
-        inline std::string to_utf8_string(char8_t const* text)
+        template<typename CharTypeOut>
+        inline std::basic_string<CharTypeOut> from_utf8_string(char const* text)
         {
-            return boost::locale::conv::utf_to_utf<char, char8_t>(text);
+            return boost::locale::conv::utf_to_utf<CharTypeOut, char>(text);
         }
     }
 }
