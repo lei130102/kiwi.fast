@@ -17,11 +17,11 @@ add_library(kiwi.fast.plugin_utility
     ${HDR_LIST}
     ${SRC_LIST})
 
-if(MSVC)
-    target_compile_options(kiwi.fast.plugin_utility PUBLIC /source-charset:utf-8)
-else()
+if(MSYS64)
     target_compile_options(kiwi.fast.plugin_utility PUBLIC -municode)
     target_link_options(kiwi.fast.plugin_utility PUBLIC -municode)
+else()
+    target_compile_options(kiwi.fast.plugin_utility PUBLIC /source-charset:utf-8)
 endif()
 
 target_include_directories(kiwi.fast.plugin_utility PUBLIC ${Boost_INCLUDE_DIRS})

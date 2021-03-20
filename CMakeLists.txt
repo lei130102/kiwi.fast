@@ -13,10 +13,9 @@ endif()
 
 project(kiwi.fast)
 
+set(CMAKE_MODULE_PATH "${${PROJECT_NAME}_SOURCE_DIR}/cmake/CMakeModules;${CMAKE_MODULE_PATH}")
 if(MSYS64)
-    set(CMAKE_MODULE_PATH "${${PROJECT_NAME}_SOURCE_DIR}/cmake/CMakeModules;${CMAKE_MODULE_PATH}")
 else()
-    set(CMAKE_MODULE_PATH "${${PROJECT_NAME}_SOURCE_DIR}/cmake/CMakeModules;$ENV{VCPKG_ROOT};${CMAKE_MODULE_PATH}")
     set(CMAKE_PREFIX_PATH "$ENV{QTVCPKG};$ENV{VCPKG_ROOT};${CMAKE_PREFIX_PATH}")
 endif()
 
@@ -25,8 +24,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSYS64)
+#g启用调试信息 O优化级别 注意这两个参数需要跟后面配合使用，可以解决大obj编译失败问题
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Og -m64 -Wa,-mbig-obj")
 else()
+#/EHa          vc编译器在release版默认是同步异常，做了优化，只会检查代码中有显式throw的异常，不能捕获非法内存访问、除零等结构化异常，修改release的编译选项，加个/EHa就好了
+#/Od           禁止优化
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHa /Od /bigobj")
 endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

@@ -49,12 +49,12 @@ public:
         return m_message.c_str();
     }
 
-    static void throw_(const char* file, std::size_t line)
+    static void throw_(const char* file, boost::throw_line::value_type line)
     {
         boost::throw_exception(bad_alloc() << boost::throw_file(file) << boost::throw_line(line));
     }
 
-    static void throw_(const char* file, std::size_t line, std::u8string const& descr)
+    static void throw_(const char* file, boost::throw_line::value_type line, std::u8string const& descr)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
         boost::throw_exception(bad_alloc(descr_) << what_info(descr) << boost::throw_file(file) << boost::throw_line(line));
@@ -85,7 +85,7 @@ public:
     virtual ~runtime_error() noexcept
     {}
 
-    static void throw_(const char* file, std::size_t line, std::u8string const& descr)
+    static void throw_(const char* file, boost::throw_line::value_type line, std::u8string const& descr)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
         boost::throw_exception(runtime_error(descr_) << what_info(descr) << boost::throw_file(file) << boost::throw_line(line));
@@ -109,7 +109,7 @@ public:
     virtual ~logic_error() noexcept
     {}
 
-    static void throw_(const char* file, std::size_t line, std::u8string const& descr)
+    static void throw_(const char* file, boost::throw_line::value_type line, std::u8string const& descr)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
         boost::throw_exception(logic_error(descr_) << what_info(descr)  << boost::throw_file(file) << boost::throw_line(line));
@@ -149,13 +149,13 @@ public:
     virtual ~system_error() noexcept
     {}
 
-    static void throw_(const char* file, std::size_t line, std::u8string const& descr, std::error_code ec)
+    static void throw_(const char* file, boost::throw_line::value_type line, std::u8string const& descr, std::error_code ec)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
         boost::throw_exception(system_error(ec, descr_) << what_info(descr) << boost::throw_file(file) << boost::throw_line(line));
     }
 
-    static void throw_(const char* file, std::size_t line, std::u8string const& descr, int ev, std::error_category const& ecat)
+    static void throw_(const char* file, boost::throw_line::value_type line, std::u8string const& descr, int ev, std::error_category const& ecat)
     {
         std::wstring descr_ = code_conversion<wchar_t>(descr);
         boost::throw_exception(system_error(ev, ecat, descr_) << what_info(descr) << boost::throw_file(file) << boost::throw_line(line));
@@ -165,10 +165,10 @@ public:
 KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
 
 #define KIWI_FAST_THROW(ex)                                          							   \
-    ex::throw_(__FILE__, static_cast<std::size_t>(__LINE__))
+    ex::throw_(__FILE__, static_cast<boost::throw_line::value_type>(__LINE__))
 
 #define KIWI_FAST_THROW_DESCR(ex, descr)                             							   \
-    ex::throw_(__FILE__, static_cast<std::size_t>(__LINE__), (descr))
+    ex::throw_(__FILE__, static_cast<boost::throw_line::value_type>(__LINE__), (descr))
 
 #define KIWI_FAST_THROW_DESCR_PARAMS(ex, descr, params)                                            \
-    ex::throw_(__FILE__, static_cast<std::size_t>(__LINE__), (descr), BOOST_PP_SEQ_ENUM(params))
+    ex::throw_(__FILE__, static_cast<boost::throw_line::value_type>(__LINE__), (descr), BOOST_PP_SEQ_ENUM(params))

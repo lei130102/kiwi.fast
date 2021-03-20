@@ -56,10 +56,6 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
     }                                                                                        \
     KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
 
-//带有FORWARD的宏用在类定义中使用type_converter::to_string函数的类的类型定义前
-#define TYPE_CONVERTER_TO_U8STRING_FORWARD(type__, u8string__)                               \
-    TYPE_CONVERTER_TO_U8STRING(type__, u8string__)
-
 #define TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(type__, u8string__)                              \
     KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE                                                  \
     namespace type_converter                                                                 \
@@ -81,10 +77,6 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
         }                                                                                    \
     }                                                                                        \
     KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
-
-//带有FORWARD的宏用在类定义中使用type_converter::to_string函数的类的类型定义前
-#define TYPE_CONVERTER_TO_U8STRING_NO_DEQUE_FORWARD(type__, u8string__)                      \
-    TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(type__, u8string__)
 
 //////////////
 
@@ -120,6 +112,8 @@ TYPE_CONVERTER_TO_U8STRING(float, u8"float")
 TYPE_CONVERTER_TO_U8STRING(double, u8"double")
 
 TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(void, u8"void")
+
+//注意 std::filesystem::path对应的是boost::filesystem::wpath
 
 TYPE_CONVERTER_TO_U8STRING(std::filesystem::path, u8"std::filesystem::path")
 TYPE_CONVERTER_TO_U8STRING(std::any, u8"std::any")

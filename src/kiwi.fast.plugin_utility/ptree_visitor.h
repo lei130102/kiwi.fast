@@ -22,6 +22,10 @@ public:
     using type_type = ptree_item::type_type;
     using value_type = ptree_item::value_type;
 
+    ptree_visitor()
+        :m_ptree_root(nullptr)
+    {}
+
     ptree_visitor(ptree_root* ptree_root_)
         :m_ptree_root(ptree_root_)
     {}
@@ -35,12 +39,12 @@ public:
         return *this;
     }
 
-    std::optional<name_type> name()
+    virtual std::optional<name_type> name()
     {
         auto ptree_item = find_object_value_item(m_names);
         if(ptree_item)
         {
-            return (*ptree_item).get().name;
+            return (*ptree_item).get().name();
         }
         else
         {
@@ -48,12 +52,12 @@ public:
         }
     }
 
-    std::optional<type_type> type()
+    virtual std::optional<type_type> type()
     {
         auto ptree_item = find_object_value_item(m_names);
         if(ptree_item)
         {
-            return (*ptree_item).get().type;
+            return (*ptree_item).get().type();
         }
         else
         {
@@ -62,14 +66,15 @@ public:
     }
 
     template<typename T>
-    std::optional<T*> value()
+    std::optional<resource_object_factory<T>> value()
     {
         auto result = value();
-        if(result)
+        if (result)
         {
             try {
-                return std::any_cast<T*>(*result);
-            }  catch (std::bad_any_cast& e) {
+                return std::any_cast<resource_object_factory<T>>(*result);
+            }
+            catch (std::bad_any_cast& e) {
                 return {};
             }
         }
@@ -78,32 +83,74 @@ public:
             return {};
         }
     }
+
     template<typename T>
-    T* value(T& default_value)
+    std::optional<resource_deque_factory<T>> value()
     {
         auto result = value();
-        if(result)
+        if (result)
         {
-            try
-            {
-                return std::any_cast<T*>(*result);
+            try {
+                return std::any_cast<resource_deque_factory<T>>(*result);
             }
-            catch(std::bad_any_cast& e)
-            {
-                return &default_value;
+            catch (std::bad_any_cast& e) {
+                return {};
             }
         }
         else
         {
-            return &default_value;
+            return {};
         }
     }
-    std::optional<value_type> value()
+
+    template<typename T>
+    std::optional<resource_object_factory<T>> value(resource_object_factory<T> const& default_value)
+    {
+        auto result = value();
+        if (result)
+        {
+            try
+            {
+                return std::any_cast<resource_object_factory<T>>(*result);
+            }
+            catch (std::bad_any_cast& e)
+            {
+                return default_value;
+            }
+        }
+        else
+        {
+            return default_value;
+        }
+    }
+
+    template<typename T>
+    std::optional<resource_deque_factory<T>> value(resource_deque_factory<T> const& default_value)
+    {
+        auto result = value();
+        if (result)
+        {
+            try
+            {
+                return std::any_cast<resource_deque_factory<T>>(*result);
+            }
+            catch (std::bad_any_cast& e)
+            {
+                return default_value;
+            }
+        }
+        else
+        {
+            return default_value;
+        }
+    }
+
+    virtual std::optional<value_type> value()
     {
         auto ptree_item = find_object_value_item(m_names);
         if(ptree_item)
         {
-            return (*ptree_item).get().value;
+            return (*ptree_item).get().value();
         }
         else
         {
@@ -117,13 +164,13 @@ public:
         auto ptree_item = find_object_value_item(m_names);
         if(ptree_item)
         {
-            //销毁之前的
-            service<service_object_factory> object_factory_service;
-            object_factory_service->destroy_object((*ptree_item).get().value, (*ptree_item).get().type);
+            ////////销毁之前的
+            //////service<service_object_factory> object_factory_service;
+            //////object_factory_service->destroy_object((*ptree_item).get().value, (*ptree_item).get().type);
 
             //设置type和value
-            (*ptree_item).get().type = type_converter::to_string<T>();
-            (*ptree_item).get().value = value;
+            (*ptree_item).get().type() = type_converter::to_string<T>();
+            (*ptree_item).get().value() = value;
 
             return true;
         }

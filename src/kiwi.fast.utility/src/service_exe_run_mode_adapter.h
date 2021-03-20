@@ -5,6 +5,8 @@
 #include <kiwi.fast.plugin_utility/service_exe_run_mode.h>
 #include <kiwi.fast.utility/src/service_exe_run_mode_imp.h>
 
+#include <kiwi.fast.plugin_utility/exceptions.h>
+
 KIWI_FAST_OPEN_UTILITY_NAMESPACE
 
 class service_exe_run_mode_adapter : public KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_exe_run_mode, public service_exe_run_mode_imp
@@ -16,7 +18,7 @@ public:
         {
             if(m_destroyed)
             {
-                //抛出异常logic_error   service_command_line_adapter has been destroyed
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"service_exe_run_mode_adapter 已被销毁");
             }
             m_instance = new service_exe_run_mode_adapter;
         }
@@ -26,7 +28,7 @@ public:
     {
         if(m_destroyed)
         {
-            //抛出异常 logic_error service_configuration_setting has been destroyed
+            KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"service_exe_run_mode_adapter 已被销毁");
         }
         delete m_instance;
         m_instance = nullptr;

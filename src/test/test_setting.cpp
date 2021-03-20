@@ -3,6 +3,7 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include <kiwi.fast.plugin_utility/code_conversion.h>
+#include <kiwi.fast.plugin_utility/exceptions.h>
 #include <kiwi.fast.plugin_utility/manager_module.h>
 #include <kiwi.fast.utility/src/manager_external_interface_imp.h>
 
@@ -30,7 +31,7 @@ public:
         //service_exe_run_mode_adapter
         KIWI_FAST_UTILITY_NAMESPACE_QUALIFIER service_exe_run_mode_adapter* service_exe_run_mode_adapter_ = nullptr;
         KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER manager_module::instance()->external_interface_manager()->query(u8"service_exe_run_mode", reinterpret_cast<void**>(&service_exe_run_mode_adapter_));
-        if(!service_exe_run_mode_adapter_)
+        if (!service_exe_run_mode_adapter_)
         {
             exit(-1);
         }
@@ -121,11 +122,23 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
     }
 }
 
-BOOST_AUTO_TEST_SUITE(s_test)
+BOOST_AUTO_TEST_SUITE(s_test_setting)
 
-BOOST_AUTO_TEST_CASE(c_test)
+BOOST_AUTO_TEST_CASE(c_test_setting)
 {
-    BOOST_CHECK(1==1);
+    //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting> setting_service;
+    //std::optional<std::filesystem::path*> bin_dir_path = setting_service->setting(u8"bin_dir_path").value<std::filesystem::path>();
+    //if (bin_dir_path)
+    //{
+    //    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"bin_dir_path:")
+    //        << (*bin_dir_path)->string()
+    //        << '\n';
+    //}
+    //else
+    //{
+    //    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"没有 bin_dir_path 配置")
+    //        << '\n';
+    //}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

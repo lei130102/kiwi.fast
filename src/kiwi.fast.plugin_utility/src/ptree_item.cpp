@@ -6,35 +6,29 @@
 KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
 
 ptree_item::ptree_item(name_type const& name_)
-	:name(name_)
-	, type(type_converter::to_string<std::deque<ptree_item>>())
-    , value(std::deque<ptree_item>())
+	:m_name(name_)
+	, m_type(type_converter::to_string<std::deque<ptree_item>>())
+    , m_value(std::deque<ptree_item>())
 {}
 
 ptree_item::~ptree_item()
-{
-    if(value.type() != typeid(std::deque<ptree_item>))
-    {
-        service<service_object_factory> object_factory_service;
-        object_factory_service->destroy_object(value, type);
-    }
-}
+{}
 
 void ptree_item::add(ptree_item const& ptree_item_)
 {
-    if(value.type() == typeid(std::deque<ptree_item>))
+    if(m_value.type() == typeid(std::deque<ptree_item>))
 	{
-		std::any_cast<std::deque<ptree_item>&>(value).push_back(ptree_item_);
+		std::any_cast<std::deque<ptree_item>&>(m_value).push_back(ptree_item_);
 	}
 }
 
 void ptree_item::remove(name_type const& name_)
 {
-    if(value.type() == typeid(std::deque<ptree_item>))
+    if(m_value.type() == typeid(std::deque<ptree_item>))
 	{
-		std::deque<ptree_item>& deque_ = std::any_cast<std::deque<ptree_item>&>(value);
+		std::deque<ptree_item>& deque_ = std::any_cast<std::deque<ptree_item>&>(m_value);
 		deque_.erase(std::remove_if(deque_.begin(), deque_.end(), [&](auto& element) {
-			if (element.name == name_)
+			if (element.m_name == name_)
 			{
 				return true;
 			}
@@ -49,11 +43,11 @@ void ptree_item::remove(name_type const& name_)
 ptree_item::ptree_type ptree_item::to_ptree() const
 {
     ptree_type item_tree;
-    item_tree.put(to_utf8_string(u8"name"), to_utf8_string(name));
-    item_tree.put(to_utf8_string(u8"type"), to_utf8_string(type));
-    if (value.type() == typeid(std::deque<ptree_item>))
+    item_tree.put(to_utf8_string(u8"name"), to_utf8_string(m_name));
+    item_tree.put(to_utf8_string(u8"type"), to_utf8_string(m_type));
+    if (m_value.type() == typeid(std::deque<ptree_item>))
     {
-        std::deque<ptree_item> const& value_ = std::any_cast<std::deque<ptree_item> const&>(value);
+        std::deque<ptree_item> const& value_ = std::any_cast<std::deque<ptree_item> const&>(m_value);
 
         ptree_type sub_item_tree;
 
@@ -66,8 +60,11 @@ ptree_item::ptree_type ptree_item::to_ptree() const
     else
     {
         service<service_object_factory> object_factory_service;
-        item_tree.put(to_utf8_string(u8"value"),
-            to_utf8_string(object_factory_service->object_to_string(value, type)));
+        auto str = object_factory_service->resource_object_to_string(m_value, m_type);
+        if (str)
+        {
+			item_tree.put(to_utf8_string(u8"value"), to_utf8_string(*str));
+        }
     }
 
     return item_tree;
@@ -102,7 +99,7 @@ ptree_item ptree_item::from_ptree(ptree_type const& tree)
             if (child_tree.first == to_utf8_string(u8"item"))
             {
                 ptree_item sub_item = from_ptree(child_tree.second);
-                std::any_cast<std::deque<ptree_item>&>(item.value).push_back(std::move(sub_item));
+                std::any_cast<std::deque<ptree_item>&>(item.m_value).push_back(std::move(sub_item));
             }
         }
         return item;
@@ -112,9 +109,10 @@ ptree_item ptree_item::from_ptree(ptree_type const& tree)
         std::u8string value = from_utf8_string<char8_t>(iter->second.data());
 
         service<service_object_factory> object_factory_service;
-        auto value_object = object_factory_service->create_object(type);
-        object_factory_service->string_to_object(value, value_object, type);
-        ptree_item item(name, type, value_object);
+        auto resource = object_factory_service->create_resource_object(type);
+        object_factory_service->string_to_resource_object(value, resource, type);
+
+        ptree_item item(name, type, resource);
         return item;
     }
 }

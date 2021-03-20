@@ -15,11 +15,16 @@ std::optional<std::reference_wrapper<ptree_item>> ptree_visitor::find_object_val
         return {};
     }
 
+    if (m_ptree_root == nullptr)
+    {
+        return {};
+    }
+
     for(auto& ptree_item_ : m_ptree_root->ptree_items)
     {
-        if(ptree_item_.name == names.front())
+        if(ptree_item_.name() == names.front())
         {
-            if(ptree_item_.value.type() == typeid(std::deque<ptree_item>))
+            if(ptree_item_.value().type() == typeid(std::deque<ptree_item>))
             {
                 names.pop_front();
                 return find_object_value_item(names);
@@ -30,5 +35,6 @@ std::optional<std::reference_wrapper<ptree_item>> ptree_visitor::find_object_val
             }
         }
     }
+    return {};
 }
 KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE

@@ -23,7 +23,6 @@ KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
 class ptree_root
 {
     friend class ptree_visitor;
-    friend class setting_visitor;
 
 public:
     using ptree_type = ptree_item::ptree_type;
@@ -50,15 +49,15 @@ public:
         return *this;
     }
 
-    void add(ptree_item const& ptree_item_)
+    void add(ptree_item&& ptree_item_)
     {
-        ptree_items.push_back(ptree_item_);
+        ptree_items.push_back(std::move(ptree_item_));
     }
 
-    void remove(name_type const& name_)
+    void remove(name_type const& name)
     {
         ptree_items.erase(std::remove_if(ptree_items.begin(), ptree_items.end(), [&](auto& element){
-            if(element.name == name_)
+            if(element.m_name == name)
             {
                 return true;
             }
@@ -107,6 +106,11 @@ public:
         }
 
         return root;
+    }
+
+    std::deque<ptree_item>& items()
+    {
+        return ptree_items;
     }
 
 private:

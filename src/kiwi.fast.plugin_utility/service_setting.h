@@ -14,12 +14,9 @@
 #include <filesystem>
 
 KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
-class service_setting;
-KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
 
-TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting, u8"service_setting")
-
-KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
+template<typename Setting>
+class service_visitor;
 
 /*!
  * \brief The service_setting class
@@ -33,59 +30,41 @@ KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
  */
 class service_setting
 {
-    friend class setting_visitor;
+    friend class service_visitor<service_setting>;
 
 protected:
     virtual ~service_setting(){}
 
+public:
     virtual ptree_root& setting_default() = 0;
     virtual ptree_root& setting_user() = 0;
     virtual ptree_root& setting_tmp() = 0;
 
-public:
-
     template<typename CharType>
-    setting_visitor setting(CharType const* name)
+    setting_visitor<service_setting> setting(CharType const* name)
     {
-        setting_visitor visitor;
+        setting_visitor<service_setting> visitor(this);
         visitor.add_name(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(name));
         return visitor;
     }
 
     template<typename CharType>
-    setting_visitor tmp_setting(CharType const* name)
+    setting_visitor<service_setting> tmp_setting(CharType const* name)
     {
-        setting_visitor visitor;
+        setting_visitor<service_setting> visitor(this);
         visitor.set_tmp(true);
         visitor.add_name(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(name));
         return visitor;
     }
 
     //常用的列在这里
-    std::optional<std::filesystem::path*> bin_dir_path()
-    {
-        return setting(u8"bin_dir_path").value<std::filesystem::path>();
-    }
-
-    std::optional<std::filesystem::path*> root_dir_path()
-    {
-        return setting(u8"root_dir_path").value<std::filesystem::path>();
-    }
-
-    std::optional<std::filesystem::path*> default_setting_dir_path()
-    {
-        return setting(u8"default_setting_dir_path").value<std::filesystem::path>();
-    }
-
-    std::optional<std::filesystem::path*> temp_dir_path()
-    {
-        return setting(u8"temp_dir_path").value<std::filesystem::path>();
-    }
-
-    std::optional<std::filesystem::path*> plugin_dir_path()
-    {
-        return setting(u8"plugin_dir_path").value<std::filesystem::path>();
-    }
+    virtual std::optional<std::filesystem::path*> bin_dir_path() = 0;
+    virtual std::optional<std::filesystem::path*> root_dir_path() = 0;
+    virtual std::optional<std::filesystem::path*> default_setting_dir_path() = 0;
+    virtual std::optional<std::filesystem::path*> temp_dir_path() = 0;
+    virtual std::optional<std::filesystem::path*> plugin_dir_path() = 0;
 };
 
 KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
+
+TYPE_CONVERTER_TO_U8STRING_NO_DEQUE(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting, u8"service_setting")

@@ -3,6 +3,7 @@
 #include <kiwi.fast.utility/detail/config.h>
 
 #include <kiwi.fast.plugin_utility/manager_external_interface.h>
+#include <kiwi.fast.plugin_utility/exceptions.h>
 
 #include <kiwi.fast.utility/src/service_exe_run_mode_adapter.h>
 #include <kiwi.fast.utility/src/service_object_factory_adapter.h>
@@ -23,7 +24,7 @@ public:
         {
             if(m_destroyed)
             {
-                //抛出异常logic_error   manager_external_interface has been destroyed
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"manager_external_interface_imp 已被销毁");
             }
             m_instance = new manager_external_interface_imp;
         }
@@ -33,7 +34,7 @@ public:
     {
         if(m_destroyed)
         {
-            //抛出异常logic_error   manager_external_interface has been destroyed
+            KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"manager_external_interface_imp 已被销毁");
         }
         delete m_instance;
         m_instance = nullptr;
@@ -44,7 +45,7 @@ public:
     {
         if(m_destroyed)
         {
-            //抛出异常logic_error   manager_external_interface has been destroyed
+            KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"manager_external_interface_imp 已被销毁");
         }
         if((m_instance != nullptr) && (m_instance != manager))
         {
@@ -57,6 +58,12 @@ public:
     bool query(const char8_t* name, void** address) override
     {
         *address = nullptr;
+
+        //因为是这样写
+        //class service_exe_run_mode_adapter : public KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_exe_run_mode, public service_exe_run_mode_imp
+        //所以service_exe_run_mode_adapter和service_exe_run_mode地址相同，而与service_exe_run_mode_imp不service_exe_run_mode_imp不同同
+
+        //所以address对应实参不要写imp类!!!
 
         if(std::u8string(name) == u8"service_exe_run_mode")
         {

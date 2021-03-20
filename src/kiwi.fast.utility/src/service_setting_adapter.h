@@ -16,7 +16,7 @@ public:
         {
             if(m_destroyed)
             {
-                //抛出异常logic_error  service_setting has been destroyed
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"service_setting_adapter 已被销毁");
             }
             m_instance = new service_setting_adapter;
         }
@@ -27,7 +27,7 @@ public:
     {
         if(m_destroyed)
         {
-            //抛出异常 logic_erro service_setting has been destroyed
+            KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"service_setting_adapter 已被销毁");
         }
         delete m_instance;
         m_instance = nullptr;

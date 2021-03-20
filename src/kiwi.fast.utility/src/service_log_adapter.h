@@ -5,6 +5,8 @@
 #include <kiwi.fast.plugin_utility/service_log.h>
 #include <kiwi.fast.utility/src/service_log_imp.h>
 
+#include <kiwi.fast.plugin_utility/exceptions.h>
+
 KIWI_FAST_OPEN_UTILITY_NAMESPACE
 
 class service_log_adapter : public KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_log, public service_log_imp
@@ -16,7 +18,7 @@ public:
         {
             if(m_destroyed)
             {
-                //抛出异常logic_error   service_log_adapter has been destroyed
+                KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"service_log_adapter 已被销毁");
             }
             m_instance = new service_log_adapter;
         }
@@ -27,7 +29,7 @@ public:
     {
         if(m_destroyed)
         {
-            //抛出异常 logic_error service_configuration_setting has been destroyed
+            KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"service_log_adapter 已被销毁");
         }
         delete m_instance;
         m_instance = nullptr;
