@@ -127,7 +127,7 @@ public:
     //template<typename T>
     //std::optional<resource_object_factory<T>> value()
     //{
-    //    auto result = value();
+    //    auto result = any_value();
     //    if (result)
     //    {
     //        try {
@@ -146,7 +146,7 @@ public:
     //template<typename T>
     //std::optional<resource_deque_factory<T>> value()
     //{
-    //    auto result = value();
+    //    auto result = any_value();
     //    if (result)
     //    {
     //        try {
@@ -165,7 +165,7 @@ public:
     //template<typename T>
     //std::optional<resource_object_factory<T>> value(resource_object_factory<T> const& default_value)
     //{
-    //    auto result = value();
+    //    auto result = any_value();
     //    if (result)
     //    {
     //        try
@@ -186,7 +186,7 @@ public:
     //template<typename T>
     //std::optional<resource_deque_factory<T>> value(resource_deque_factory<T> const& default_value)
     //{
-    //    auto result = value();
+    //    auto result = any_value();
     //    if (result)
     //    {
     //        try
@@ -204,7 +204,7 @@ public:
     //    }
     //}
 
-    std::optional<value_type> value()
+    std::optional<value_type> any_value()
     {
         if(m_tmp)
         {

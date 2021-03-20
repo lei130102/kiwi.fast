@@ -70,6 +70,8 @@ public:
 
     ~ptree_item();
 
+    void add(ptree_item&& ptree_item_);
+
     void add(ptree_item const& ptree_item_);
 
     void remove(name_type const& name_);

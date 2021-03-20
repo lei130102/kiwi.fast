@@ -54,6 +54,11 @@ public:
         ptree_items.push_back(std::move(ptree_item_));
     }
 
+    void add(ptree_item const& ptree_item_)
+    {
+        ptree_items.push_back(ptree_item_);
+    }
+
     void remove(name_type const& name)
     {
         ptree_items.erase(std::remove_if(ptree_items.begin(), ptree_items.end(), [&](auto& element){

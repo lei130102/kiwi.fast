@@ -7,6 +7,8 @@
 #include <kiwi.fast.plugin_utility/manager_module.h>
 #include <kiwi.fast.utility/src/manager_external_interface_imp.h>
 
+#include <filesystem>
+
 class wmain_instance
 {
 public:
@@ -126,13 +128,14 @@ BOOST_AUTO_TEST_SUITE(s_test_setting)
 
 BOOST_AUTO_TEST_CASE(c_test_setting)
 {
+    //测试基本缺省信息
     //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting> setting_service;
-    //std::optional<std::filesystem::path*> bin_dir_path = setting_service->setting(u8"bin_dir_path").value<std::filesystem::path>();
+    //std::optional<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path>> bin_dir_path = setting_service->setting(u8"bin_dir_path").value<std::filesystem::path>();
     //if (bin_dir_path)
     //{
-    //    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"bin_dir_path:")
-    //        << (*bin_dir_path)->string()
-    //        << '\n';
+    //    //std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"bin_dir_path:")
+    //    //    << (*bin_dir_path)->string()
+    //    //    << '\n';
     //}
     //else
     //{

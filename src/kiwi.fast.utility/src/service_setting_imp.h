@@ -139,42 +139,25 @@ protected:
      */
     void add_basic_default_setting()
     {
-        //std::filesystem::path path2_ = std::filesystem::current_path();
-        ////std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(path2_.native()) << '\n';
-        //std::cout << path2_.string() << '\n';
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> bin_dir_path;
+        *bin_dir_path = std::filesystem::current_path();
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"bin_dir_path", bin_dir_path));
 
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> root_dir_path;
+        *root_dir_path = bin_dir_path->parent_path();
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"root_dir_path", root_dir_path));
 
-        //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> path_;
-        //*path_ = std::filesystem::current_path();
-        //std::cout << path_->string() << '\n';
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> default_setting_dir_path;
+        *default_setting_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"default_setting"));
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"default_setting_dir_path", default_setting_dir_path));
 
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> temp_dir_path;
+        *temp_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"temp"));
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"temp_dir_path", temp_dir_path));
 
-
-
-        //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> bin_dir_path;
-        //*bin_dir_path = std::filesystem::current_path();
-
-        //std::cout << bin_dir_path->string() << '\n';
-
-        //m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"bin_dir_path", bin_dir_path.get()));
-
-        //std::cout << bin_dir_path->string() << '\n';
-
-        //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> root_dir_path;
-        //*root_dir_path = bin_dir_path->parent_path();
-        //m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"root_dir_path", root_dir_path.release()));
-
-        //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> default_setting_dir_path;
-        //*default_setting_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"default_setting"));
-        //m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"default_setting_dir_path", default_setting_dir_path.release()));
-
-        //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> temp_dir_path;
-        //*temp_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"temp"));
-        //m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"temp_dir_path", temp_dir_path.release()));
-
-        //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> plugin_dir_path;
-        //*plugin_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"plugin"));
-        //m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"plugin_dir_path", plugin_dir_path.release()));
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path> plugin_dir_path;
+        *plugin_dir_path = *root_dir_path / std::filesystem::path(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<wchar_t>(u8"plugin"));
+        m_setting_default.add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item(u8"plugin_dir_path", plugin_dir_path));
     }
 
     struct setting_index_less

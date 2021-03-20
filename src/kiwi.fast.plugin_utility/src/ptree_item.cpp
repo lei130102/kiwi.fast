@@ -14,6 +14,14 @@ ptree_item::ptree_item(name_type const& name_)
 ptree_item::~ptree_item()
 {}
 
+void ptree_item::add(ptree_item&& ptree_item_)
+{
+    if (m_value.type() == typeid(std::deque<ptree_item>))
+    {
+        std::any_cast<std::deque<ptree_item>&>(m_value).push_back(std::move(ptree_item_));
+    }
+}
+
 void ptree_item::add(ptree_item const& ptree_item_)
 {
     if(m_value.type() == typeid(std::deque<ptree_item>))

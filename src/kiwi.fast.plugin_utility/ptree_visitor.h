@@ -68,7 +68,7 @@ public:
     template<typename T>
     std::optional<resource_object_factory<T>> value()
     {
-        auto result = value();
+        auto result = any_value();
         if (result)
         {
             try {
@@ -87,7 +87,7 @@ public:
     template<typename T>
     std::optional<resource_deque_factory<T>> value()
     {
-        auto result = value();
+        auto result = any_value();
         if (result)
         {
             try {
@@ -106,7 +106,7 @@ public:
     template<typename T>
     std::optional<resource_object_factory<T>> value(resource_object_factory<T> const& default_value)
     {
-        auto result = value();
+        auto result = any_value();
         if (result)
         {
             try
@@ -127,7 +127,7 @@ public:
     template<typename T>
     std::optional<resource_deque_factory<T>> value(resource_deque_factory<T> const& default_value)
     {
-        auto result = value();
+        auto result = any_value();
         if (result)
         {
             try
@@ -145,10 +145,10 @@ public:
         }
     }
 
-    virtual std::optional<value_type> value()
+    virtual std::optional<value_type> any_value()
     {
         auto ptree_item = find_object_value_item(m_names);
-        if(ptree_item)
+        if (ptree_item)
         {
             return (*ptree_item).get().value();
         }
@@ -181,6 +181,7 @@ public:
     }
 
 protected:
+
     void add_name(std::u8string const& name)
     {
         m_names.push_back(name);
