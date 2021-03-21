@@ -7,6 +7,7 @@
 
 #include <kiwi.fast.utility/src/service_exe_run_mode_adapter.h>
 #include <kiwi.fast.utility/src/service_object_factory_adapter.h>
+#include <kiwi.fast.utility/src/service_data_value_adapter.h>
 #include <kiwi.fast.utility/src/service_command_line_adapter.h>
 #include <kiwi.fast.utility/src/service_setting_adapter.h>
 #include <kiwi.fast.utility/src/service_log_adapter.h>
@@ -73,6 +74,10 @@ public:
         {
             *address = dynamic_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_object_factory*>(service_object_factory_adapter::instance());
         }
+        else if (std::u8string(name) == u8"service_data_value")
+        {
+            *address = dynamic_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_data_value*>(service_data_value_adapter::instance());
+        }
         else if(std::u8string(name) == u8"service_command_line")
         {
             *address = dynamic_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_command_line*>(service_command_line_adapter::instance());
@@ -104,6 +109,10 @@ public:
         else if(std::u8string(name) == u8"service_object_factory")
         {
             service_object_factory_adapter::destroy();
+        }
+        else if (std::u8string(name) == u8"service_data_value")
+        {
+            service_data_value_adapter::destroy();
         }
         else if(std::u8string(name) == u8"service_command_line")
         {

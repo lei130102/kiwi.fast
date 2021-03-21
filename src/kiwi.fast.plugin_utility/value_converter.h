@@ -25,51 +25,49 @@ namespace value_converter
         template<typename CharType = char8_t>
         inline std::size_t deque_element_number_from_string(CharType const* str, CharType const* sep, bool* is_error = nullptr)
         {
-            return 0;
+            bool is_error_ = false;
+            if (is_error != nullptr)
+            {
+                *is_error = false;
+            }
 
-            //bool is_error_ = false;
-            //if (is_error != nullptr)
-            //{
-            //    *is_error = false;
-            //}
+            std::size_t result = 0;
+            std::basic_string<CharType> str_ = str;
 
-            //std::size_t result = 0;
-            //std::basic_string<CharType> str_ = str;
+            if (str_.empty())
+            {
+                return result;
+            }
 
-            //if (str_.empty())
-            //{
-            //    return result;
-            //}
-
-            //bool parsing = true;
-            //typename std::basic_string<CharType>::size_type last_index = 0;
-            //std::size_t element_index = 0;
-            //while (parsing)
-            //{
-            //    typename std::basic_string<CharType>::size_type index = str_.find(sep, last_index);
-            //    if (index == std::basic_string<CharType>::npos)
-            //    {
-            //        index = str_.size();
-            //    }
-            //    if (is_error_)
-            //    {
-            //        if (is_error != nullptr)
-            //        {
-            //            *is_error = true;
-            //        }
-            //        return result;
-            //    }
-            //    last_index = index + std::basic_string<CharType>(sep).size();
-            //    if (index == str.size())
-            //    {
-            //        parsing = false;
-            //    }
-            //    else
-            //    {
-            //        ++result;
-            //    }
-            //}
-            //return result;
+            bool parsing = true;
+            typename std::basic_string<CharType>::size_type last_index = 0;
+            std::size_t element_index = 0;
+            while (parsing)
+            {
+                typename std::basic_string<CharType>::size_type index = str_.find(sep, last_index);
+                if (index == std::basic_string<CharType>::npos)
+                {
+                    index = str_.size();
+                }
+                if (is_error_)
+                {
+                    if (is_error != nullptr)
+                    {
+                        *is_error = true;
+                    }
+                    return result;
+                }
+                last_index = index + std::basic_string<CharType>(sep).size();
+                if (index == str_.size())
+                {
+                    parsing = false;
+                }
+                else
+                {
+                    ++result;
+                }
+            }
+            return result;
         }
 
         template<typename CharType = char8_t>
@@ -80,7 +78,7 @@ namespace value_converter
     }
 
     template<typename T, typename CharType = char8_t>
-    inline std::optional<std::basic_string<CharType>> object_to_string(T* obj, bool* is_error = nullptr);
+    inline std::optional<std::basic_string<CharType>> object_to_string(T const* obj, bool* is_error = nullptr);
 
     template<typename T, typename CharType = char8_t>
     inline void object_from_string(T* obj, CharType const* str, bool* is_error = nullptr);
@@ -91,7 +89,7 @@ namespace value_converter
     }
 
     template<typename T, typename CharType = char8_t>
-    inline std::optional<std::basic_string<CharType>> deque_to_string(std::deque<T*>* deq, CharType const* sep, bool* is_error = nullptr)
+    inline std::optional<std::basic_string<CharType>> deque_to_string(std::deque<T*> const* deq, CharType const* sep, bool* is_error = nullptr)
     {
         bool is_error_ = false;
         if (is_error != nullptr)
@@ -126,7 +124,7 @@ namespace value_converter
         return result;
     }
     template<typename T, typename CharType = char8_t>
-    inline std::optional<std::basic_string<CharType>> deque_to_string(std::deque<T*>* deq, std::basic_string<CharType> const& sep, bool* is_error = nullptr)
+    inline std::optional<std::basic_string<CharType>> deque_to_string(std::deque<T*> const* deq, std::basic_string<CharType> const& sep, bool* is_error = nullptr)
     {
         return deque_to_string<T>(deq, sep.c_str(), is_error);
     }
@@ -194,7 +192,7 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
     namespace value_converter                                                                                         \
     {                                                                                                                 \
         template<>                                                                                                    \
-        inline std::optional<std::basic_string<char8_t>> object_to_string(type__* obj, bool* is_error)                \
+        inline std::optional<std::basic_string<char8_t>> object_to_string(type__ const* obj, bool* is_error)          \
         {                                                                                                             \
             if(obj == nullptr)                                                                                        \
             {                                                                                                         \
@@ -228,7 +226,7 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
     namespace value_converter                                                                                         \
     {                                                                                                                 \
         template<>                                                                                                    \
-        inline std::optional<std::basic_string<char8_t>> object_to_string(type__* obj, bool* is_error)                \
+        inline std::optional<std::basic_string<char8_t>> object_to_string(type__ const* obj, bool* is_error)          \
         {                                                                                                             \
             if(obj == nullptr)                                                                                        \
             {                                                                                                         \
@@ -262,7 +260,7 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
     namespace value_converter                                                                                         \
     {                                                                                                                 \
         template<>                                                                                                    \
-        inline std::optional<std::basic_string<char8_t>> object_to_string(type__* obj, bool* is_error)                \
+        inline std::optional<std::basic_string<char8_t>> object_to_string(type__ const* obj, bool* is_error)          \
         {                                                                                                             \
             if(obj == nullptr)                                                                                        \
             {                                                                                                         \
@@ -292,7 +290,7 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
     namespace value_converter                                                                                         \
     {                                                                                                                 \
         template<>                                                                                                    \
-        inline std::optional<std::basic_string<char8_t>> object_to_string(type__* obj, bool* is_error)                \
+        inline std::optional<std::basic_string<char8_t>> object_to_string(type__ const* obj, bool* is_error)          \
         {                                                                                                             \
             if(obj == nullptr)                                                                                        \
             {                                                                                                         \

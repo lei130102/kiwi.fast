@@ -2,12 +2,9 @@
 
 #include <kiwi.fast.plugin_utility/detail/config.h>
 #include <kiwi.fast.plugin_utility/code_conversion.h>
-#include <kiwi.fast.plugin_utility/type_converter.h>
-
-#include <kiwi.fast.plugin_utility/resource_object_factory.h>
-
+#include <kiwi.fast.plugin_utility/data_value.h>
 #include <kiwi.fast.plugin_utility/service.h>
-#include <kiwi.fast.plugin_utility/service_object_factory.h>
+#include <kiwi.fast.plugin_utility/service_data_value.h>
 
 #include <boost/property_tree/ptree.hpp>
 
@@ -15,109 +12,238 @@
 #include <any>
 #include <variant>
 #include <deque>
+#include <type_traits>
+#include <memory>
 
 KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
 
-/*!
- * \brief The ptree_item struct
- */
-class ptree_item
+class base_ptree_item : public std::enable_shared_from_this<base_ptree_item>
 {
-    friend class ptree_root;
 public:
     //使用ptree，而不是wptree，是因为wptree写入读取文件时使用wiofstream，他在mingw下无法正常工作(解决方式麻烦)
     using ptree_type = boost::property_tree::ptree;
 
     using name_type = std::u8string;
     using type_type = std::u8string;
-    using value_type = std::any;
+    using item_value_type = data_value;
+    using item_set_value_type = std::deque<std::shared_ptr<base_ptree_item>>;
 
-    template<typename T>
-    using resource_object_factory_value_type = resource_object_factory<T>;
+    static std::shared_ptr<base_ptree_item> create_ptree_item(name_type const& name, data_value const& value);
+    static std::shared_ptr<base_ptree_item> create_ptree_item_set(name_type const& name);
+    static std::shared_ptr<base_ptree_item> create_ptree_root(name_type const& name);
+    static std::shared_ptr<base_ptree_item> from_ptree(ptree_type const& tree);
+    static std::shared_ptr<base_ptree_item> from_root_ptree(ptree_type const& tree);
 
-    template<typename T>
-    using resource_deque_factory_value_type = resource_deque_factory<T>;
+    virtual ~base_ptree_item() {};
 
-    //
-    ptree_item()
-    {}
+    virtual void add(std::shared_ptr<base_ptree_item> const& ptree_item_) = 0;
 
+    virtual void remove(name_type const& name) = 0;
 
-    //
+    virtual ptree_type to_ptree() const = 0;
 
-    template<typename T>
-    ptree_item(name_type const& name, resource_object_factory_value_type<T> const& value)
-        :m_name(name)
-        , m_type(type_converter::to_string<T>())
-        , m_value(value)
-    {}
+    virtual ptree_type to_root_ptree() const = 0;
 
-    template<typename T>
-    ptree_item(name_type const& name, resource_deque_factory_value_type<T> const& value)
-        :m_name(name)
-        ,m_type(type_converter::to_string<T>())
-        ,m_value(value)
-    {}
+    std::reference_wrapper<name_type> name()
+    {
+        return m_name;
+    }
 
-    ptree_item(name_type const& name, type_type const& type, value_type const& value)
-        :m_name(name)
+    std::reference_wrapper<const name_type> name() const
+    {
+        return m_name;
+    }
+
+    std::reference_wrapper<type_type> v_type()
+    {
+        return m_type;
+    }
+
+    std::reference_wrapper<const type_type> v_type() const
+    {
+        return m_type;
+    }
+
+    virtual std::optional<std::reference_wrapper<item_value_type>> value() = 0;
+
+    virtual std::optional<std::reference_wrapper<const item_value_type>> value() const = 0;
+
+protected:
+    base_ptree_item(name_type const& name, type_type const& type)
+        : m_name(name)
         , m_type(type)
-        , m_value(value)
     {}
 
-    //
-    ptree_item(name_type const& name_);
-
-    ~ptree_item();
-
-    void add(ptree_item&& ptree_item_);
-
-    void add(ptree_item const& ptree_item_);
-
-    void remove(name_type const& name_);
-
-    ptree_type to_ptree() const;
-
-    static ptree_item from_ptree(ptree_type const& tree);
-
-    name_type& name()
+    static void from_ptree_info(ptree_type const& tree, name_type& name, type_type& type)
     {
-        return m_name;
+        auto iter = tree.find(to_utf8_string(u8"name"));
+        if (iter == tree.not_found())
+        {
+            KIWI_FAST_THROW_DESCR(logic_error, u8"没有找到 name");
+        }
+        name = from_utf8_string<char8_t>(iter->second.data());
+
+        iter = tree.find(to_utf8_string(u8"type"));
+        if (iter == tree.not_found())
+        {
+            KIWI_FAST_THROW_DESCR(logic_error, u8"没有找到 type");
+        }
+        type = from_utf8_string<char8_t>(iter->second.data());
     }
 
-    name_type const& name() const
+    static type_type set_v_type()
     {
-        return m_name;
-    }
-
-    type_type& type()
-    {
-        return m_type;
-    }
-
-    type_type const& type() const
-    {
-        return m_type;
-    }
-
-    value_type& value()
-    {
-        return m_value;
-    }
-
-    value_type const& value() const
-    {
-        return m_value;
+        return u8"ptree_item_set";
     }
 
 private:
     name_type m_name;
     type_type m_type;
+};
 
-    //m_value中存放的是 resource_object_factory<T> 或者  resource_deque_factory<T> 或者 std::deque<ptree_item> 类型对象
+template<bool IsSet>
+class basic_ptree_item : public base_ptree_item
+{
+public:
+    using value_type = typename base_ptree_item::item_value_type;
+
+    //
+    basic_ptree_item(name_type const& name, data_value const& value)
+        :base_ptree_item(name, *value.inside_type())
+        , m_value(value)
+    {}
+
+    ~basic_ptree_item()
+    {}
+
+    void add(std::shared_ptr<base_ptree_item> const& ptree_item_) override
+    {
+        //空
+    }
+
+    void remove(name_type const& name_) override
+    {
+        //空
+    }
+
+    ptree_type to_ptree() const override
+    {
+        ptree_type item_tree;
+        item_tree.put(to_utf8_string(u8"name"), to_utf8_string(name_type(this->name())));
+        item_tree.put(to_utf8_string(u8"type"), to_utf8_string(type_type(this->v_type())));
+		service<service_data_value> data_value_service;
+		auto str = data_value_service->data_value_to_string(m_value);
+		if (str)
+		{
+			item_tree.put(to_utf8_string(u8"value"), to_utf8_string(*str));
+		}
+
+        return item_tree;
+    }
+
+    ptree_type to_root_ptree() const override
+    {
+        ptree_type kiwi_fast_tree;
+
+        ptree_type root_tree;
+        root_tree.put_child(to_utf8_string(u8"kiwi_fast"), kiwi_fast_tree);
+
+        return root_tree;
+    }
+
+    std::optional<std::reference_wrapper<item_value_type>> value()
+    {
+        return std::ref(m_value);
+    }
+
+    std::optional<std::reference_wrapper<const item_value_type>> value() const
+    {
+        return std::cref(m_value);
+    }
+
+private:
     value_type m_value;
 };
 
-KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
+template<>
+class basic_ptree_item<true> : public base_ptree_item
+{
+public:
+    using value_type = typename base_ptree_item::item_set_value_type;
 
-TYPE_CONVERTER_TO_U8STRING(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item, u8"ptree_item")
+    //
+    basic_ptree_item(name_type const& name)
+        :base_ptree_item(name, base_ptree_item::set_v_type())
+    {}
+
+    ~basic_ptree_item()
+    {}
+
+    void add(std::shared_ptr<base_ptree_item> const& ptree_item_) override
+    {
+        m_value.push_back(ptree_item_);
+    }
+
+    void remove(name_type const& name_) override
+    {
+        m_value.erase(std::remove_if(m_value.begin(), m_value.end(), [&](auto const& element) {
+            if (name_type(element->name()) == name_)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+            }), m_value.end());
+    }
+
+    ptree_type to_ptree() const override
+    {
+        ptree_type item_tree;
+        item_tree.put(to_utf8_string(u8"name"), to_utf8_string(name_type(this->name())));
+        item_tree.put(to_utf8_string(u8"type"), to_utf8_string(type_type(this->v_type())));
+
+		ptree_type sub_item_tree;
+		std::for_each(m_value.begin(), m_value.end(), [&](auto const& ptree_item_) {
+			sub_item_tree.add_child(to_utf8_string(u8"item"), ptree_item_->to_ptree());
+			});
+
+		item_tree.put_child(to_utf8_string(u8"value"), sub_item_tree);
+
+        return item_tree;
+    }
+
+    ptree_type to_root_ptree() const override
+    {
+        ptree_type kiwi_fast_tree;
+
+        std::for_each(m_value.begin(), m_value.end(), [&](auto const& ptree_item_) {
+            kiwi_fast_tree.add_child(to_utf8_string(u8"item"), ptree_item_->to_ptree());
+            });
+
+        ptree_type root_tree;
+        root_tree.put_child(to_utf8_string(u8"kiwi_fast"), kiwi_fast_tree);
+
+        return root_tree;
+    }
+
+    std::optional<std::reference_wrapper<item_value_type>> value()
+    {
+        return {};
+    }
+
+    std::optional<std::reference_wrapper<const item_value_type>> value() const
+    {
+        return {};
+    }
+
+private:
+    value_type m_value;
+};
+
+using ptree_item = basic_ptree_item<false>;
+using ptree_item_set = basic_ptree_item<true>;
+using ptree_root = basic_ptree_item<true>;
+
+KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE

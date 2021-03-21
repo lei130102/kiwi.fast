@@ -38,6 +38,19 @@ public:
     }
     virtual std::any create_object(const char8_t* class_name) = 0;
 
+
+    template<typename CharType>
+    std::any copy_object(CharType const* class_name, std::any const& rhs)
+    {
+        return copy_object(std::basic_string<CharType>(class_name), rhs);
+    }
+    template<typename CharType>
+    std::any copy_object(std::basic_string<CharType> const& class_name, std::any const& rhs)
+    {
+        return copy_object(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str(), rhs);
+    }
+    virtual std::any copy_object(const char8_t* class_name, std::any const& rhs) = 0;
+
     /*!
      *
      */
@@ -52,201 +65,6 @@ public:
         destroy_object(object, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
     }
     virtual void destroy_object(std::any& object, const char8_t* class_name) = 0;
-
-
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    std::any create_resource_object(CharType const* class_name)
-    {
-        return create_resource_object(std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    std::any create_resource_object(std::basic_string<CharType> const& class_name)
-    {
-        return create_resource_object(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual std::any create_resource_object(const char8_t* class_name) = 0;
-
-
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    std::any create_deque(CharType const* class_name)
-    {
-        return create_deque(std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    std::any create_deque(std::basic_string<CharType> const& class_name)
-    {
-        return create_deque(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual std::any create_deque(const char8_t* class_name) = 0;
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    void destroy_deque(std::any& deque, CharType const* class_name)
-    {
-        destroy_deque(deque, std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    void destroy_deque(std::any& deque, std::basic_string<CharType> const& class_name)
-    {
-        destroy_deque(deque, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual void destroy_deque(std::any& deque, const char8_t* class_name) = 0;
-
-
-
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    std::any create_resource_deque(CharType const* class_name)
-    {
-        return create_resource_deque(std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    std::any create_resource_deque(std::basic_string<CharType> const& class_name)
-    {
-        return create_resource_deque(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual std::any create_resource_deque(const char8_t* class_name) = 0;
-
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    std::optional<std::u8string> object_to_string(std::any const& object, CharType const* class_name)
-    {
-        return object_to_string(object, std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    std::optional<std::u8string> object_to_string(std::any const& object, std::basic_string<CharType> const& class_name)
-    {
-        return object_to_string(object, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual std::optional<std::u8string> object_to_string(std::any const& object, const char8_t* class_name) = 0;
-
-
-    template<typename CharType>
-    std::optional<std::u8string> resource_object_to_string(std::any const& object, CharType const* class_name)
-    {
-        return resource_object_to_string(object, std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    std::optional<std::u8string> resource_object_to_string(std::any const& object, std::basic_string<CharType> const& class_name)
-    {
-        return resource_object_to_string(object, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual std::optional<std::u8string> resource_object_to_string(std::any const& object, const char8_t* class_name) = 0;
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    void string_to_object(CharType const* str, std::any& object, CharType const* class_name)
-    {
-        return string_to_object(std::basic_string<CharType>(str), object
-                                , std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    void string_to_object(std::basic_string<CharType> const& str, std::any& object, std::basic_string<CharType> const& class_name)
-    {
-        return string_to_object(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(str).c_str(), object
-                                , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual void string_to_object(const char8_t* str, std::any& object, const char8_t* class_name) = 0;
-
-
-    template<typename CharType>
-    void string_to_resource_object(CharType const* str, std::any& object, CharType const* class_name)
-    {
-        return string_to_resource_object(std::basic_string<CharType>(str), object
-            , std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    void string_to_resource_object(std::basic_string<CharType> const& str, std::any& object, std::basic_string<CharType> const& class_name)
-    {
-        return string_to_resource_object(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(str).c_str(), object
-            , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual void string_to_resource_object(const char8_t* str, std::any& object, const char8_t* class_name) = 0;
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    std::optional<std::u8string> deque_to_string(std::any const& object, CharType const* class_name)
-    {
-        return deque_to_string(object, std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    std::optional<std::u8string> deque_to_string(std::any const& object, std::basic_string<CharType> const& class_name)
-    {
-        return deque_to_string(object, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual std::optional<std::u8string> deque_to_string(std::any const& object, const char8_t* class_name) = 0;
-
-    
-
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    std::optional<std::u8string> resource_deque_to_string(std::any const& object, CharType const* class_name)
-    {
-        return resource_deque_to_string(object, std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    std::optional<std::u8string> resource_deque_to_string(std::any const& object, std::basic_string<CharType> const& class_name)
-    {
-        return resource_deque_to_string(object, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual std::optional<std::u8string> resource_deque_to_string(std::any const& object, const char8_t* class_name) = 0;
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    void string_to_deque(CharType const* str, std::any& object, CharType const* class_name)
-    {
-        string_to_deque(std::basic_string<CharType>(str), object, std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    void string_to_deque(std::basic_string<CharType> const& str, std::any& object, std::basic_string<CharType> const& class_name)
-    {
-        string_to_deque(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(str).c_str()
-                               , object
-                               , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual void string_to_deque(const char8_t* str, std::any& object, const char8_t* class_name) = 0;
-
-    /*!
-     *
-     */
-    template<typename CharType>
-    void string_to_resource_deque(CharType const* str, std::any& object, CharType const* class_name)
-    {
-        string_to_resource_deque(std::basic_string<CharType>(str), object, std::basic_string<CharType>(class_name));
-    }
-    template<typename CharType>
-    void string_to_resource_deque(std::basic_string<CharType> const& str, std::any& object, std::basic_string<CharType> const& class_name)
-    {
-        string_to_resource_deque(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(str).c_str()
-            , object
-            , KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
-    }
-    virtual void string_to_resource_deque(const char8_t* str, std::any& object, const char8_t* class_name) = 0;
 };
 
 KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
