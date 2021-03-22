@@ -28,6 +28,9 @@ public:
     using item_value_type = data_value;
     using item_set_value_type = std::deque<std::shared_ptr<base_ptree_item>>;
 
+    //m_type改到派生类中，当修改data_value时自动更新
+
+    //改为friend非成员函数
     static std::shared_ptr<base_ptree_item> create_ptree_item(name_type const& name, data_value const& value);
     static std::shared_ptr<base_ptree_item> create_ptree_item_set(name_type const& name);
     static std::shared_ptr<base_ptree_item> create_ptree_root(name_type const& name);
@@ -115,6 +118,11 @@ public:
     basic_ptree_item(name_type const& name, data_value const& value)
         :base_ptree_item(name, *value.inside_type())
         , m_value(value)
+    {}
+
+    basic_ptree_item(name_type const& name, data_value&& value)
+        :base_ptree_item(name, *value.inside_type())
+        , m_value(std::move(value))
     {}
 
     ~basic_ptree_item()

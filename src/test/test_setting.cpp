@@ -5,12 +5,20 @@
 #include <kiwi.fast.plugin_utility/code_conversion.h>
 #include <kiwi.fast.plugin_utility/exceptions.h>
 #include <kiwi.fast.plugin_utility/manager_module.h>
+#include <kiwi.fast.plugin_utility/ptree_item.h>
 #include <kiwi.fast.utility/src/manager_external_interface_imp.h>
 #include <kiwi.fast.utility/src/register_type.h>
 
 #include <kiwi.fast.plugin_utility/data_value.h>
 
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+
+#include <memory>
 #include <filesystem>
+#include <string>
+#include <deque>
 
 class wmain_instance
 {
@@ -569,6 +577,123 @@ BOOST_AUTO_TEST_CASE(c_test_data_value_with_service_data_value_help)
         BOOST_CHECK(dv_from_string.is_valid());
         BOOST_CHECK(dv_from_string.value<bool>() == true);
     }
+}
+
+BOOST_AUTO_TEST_CASE(c_test_ptree_item)
+{
+    {
+        //创建ptree_root
+
+		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root root(u8"");
+
+		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value name((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
+		name.value<std::u8string>() = u8"张三";
+		root.add(
+			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
+				std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item>(u8"name", std::move(name))
+				)
+		);
+
+		auto info_item = std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item_set>(u8"info");
+
+		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value sex((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
+		sex.value<std::u8string>() = u8"男";
+		info_item->add(
+			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
+				std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item>(u8"sex", std::move(sex))
+				)
+		);
+
+		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value age((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<int>()));
+		age.value<int>() = 23;
+		info_item->add(
+			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
+				std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item>(u8"age", std::move(age))
+				)
+		);
+
+		root.add(
+			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
+				info_item
+				)
+		);
+
+        //转为ptree类型
+
+		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree = root.to_root_ptree();
+
+        //转xml文件
+        boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test.xml)"), ptree);
+
+/*文件内容为：
+<?xml version="1.0" encoding="utf-8"?>
+<kiwi_fast>
+	<item>
+		<name>name</name>
+		<type>std::u8string</type>
+		<value>张三</value>
+	</item>
+	<item>
+		<name>info</name>
+		<type>ptree_item_set</type>
+		<value>
+			<item>
+				<name>sex</name>
+				<type>std::u8string</type>
+				<value>男</value>
+			</item>
+			<item>
+				<name>age</name>
+				<type>int</type>
+				<value>23</value>
+			</item>
+		</value>
+	</item>
+</kiwi_fast>
+*/
+        //转json文件
+        boost::property_tree::write_json(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test.json)"), ptree);
+
+/*文件内容为：
+{
+    "kiwi_fast": {
+        "item": {
+            "name": "name",
+            "type": "std::u8string",
+            "value": "张三"
+        },
+        "item": {
+            "name": "info",
+            "type": "ptree_item_set",
+            "value": {
+                "item": {
+                    "name": "sex",
+                    "type": "std::u8string",
+                    "value": "男"
+                },
+                "item": {
+                    "name": "age",
+                    "type": "int",
+                    "value": "23"
+                }
+            }
+        }
+    }
+}
+*/
+
+        //转ini文件
+        //boost::property_tree::write_ini(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test.ini)"), ptree);
+        
+        //抛出异常，并且文件内容为空，应该是因为他不是有效的ini格式
+
+
+        //使用 ptree_visitor 访问 ptree_root
+        
+        //读写data_value
+        //std::optional<std::reference_wrapper<data_value>> name = root.item(u8"name")->value();
+        //std::optional<std::reference_wrapper<data_value>> sex = root.item(u8"info")->(u8"sex")->value();
+	}
 }
 
 BOOST_AUTO_TEST_CASE(c_test_setting)
