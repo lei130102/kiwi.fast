@@ -64,9 +64,13 @@ public:
         return m_type;
     }
 
-    virtual std::optional<std::reference_wrapper<item_value_type>> value() = 0;
+    virtual std::optional<std::reference_wrapper<item_value_type>> item_value() = 0;
 
-    virtual std::optional<std::reference_wrapper<const item_value_type>> value() const = 0;
+    virtual std::optional<std::reference_wrapper<const item_value_type>> item_value() const = 0;
+
+    virtual std::optional<std::reference_wrapper<item_set_value_type>> item_set_value() = 0;
+
+    virtual std::optional<std::reference_wrapper<const item_set_value_type>> item_set_value() const = 0;
 
 protected:
     base_ptree_item(name_type const& name, type_type const& type)
@@ -151,14 +155,24 @@ public:
         return root_tree;
     }
 
-    std::optional<std::reference_wrapper<item_value_type>> value()
+    std::optional<std::reference_wrapper<item_value_type>> item_value()
     {
         return std::ref(m_value);
     }
 
-    std::optional<std::reference_wrapper<const item_value_type>> value() const
+    std::optional<std::reference_wrapper<const item_value_type>> item_value() const
     {
         return std::cref(m_value);
+    }
+
+    std::optional<std::reference_wrapper<item_set_value_type>> item_set_value() override
+    {
+        return {};
+    }
+
+    std::optional<std::reference_wrapper<const item_set_value_type>> item_set_value() const override
+    {
+        return {};
     }
 
 private:
@@ -228,14 +242,24 @@ public:
         return root_tree;
     }
 
-    std::optional<std::reference_wrapper<item_value_type>> value()
+    std::optional<std::reference_wrapper<item_value_type>> item_value()
     {
         return {};
     }
 
-    std::optional<std::reference_wrapper<const item_value_type>> value() const
+    std::optional<std::reference_wrapper<const item_value_type>> item_value() const
     {
         return {};
+    }
+
+    std::optional<std::reference_wrapper<item_set_value_type>> item_set_value() override
+    {
+        return m_value;
+    }
+
+    std::optional<std::reference_wrapper<const item_set_value_type>> item_set_value() const override
+    {
+        return m_value;
     }
 
 private:

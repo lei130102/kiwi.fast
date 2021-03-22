@@ -52,6 +52,10 @@ std::shared_ptr<base_ptree_item> base_ptree_item::from_ptree(ptree_type const& t
         }
         return item;
     }
+    else
+    {
+        return std::shared_ptr<base_ptree_item>();
+    }
 }
 
 std::shared_ptr<base_ptree_item> base_ptree_item::from_root_ptree(ptree_type const& tree)

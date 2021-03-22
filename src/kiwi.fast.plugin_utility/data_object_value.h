@@ -46,17 +46,6 @@ public:
 		return new data_object_value<T, CharType>(*this);
 	}
 
-	bool operator==(data_value_wrapper const& rhs) const override
-	{
-		if (rhs.type_index() != type_index())
-		{
-			return false;
-		}
-
-		data_object_value<T, CharType> const& tmp = static_cast<data_object_value<T, CharType> const&>(rhs);
-		return this->operator*() == *tmp;
-	}
-
 	void* pointer() override
 	{
 		return this->get();

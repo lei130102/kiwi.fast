@@ -3,10 +3,9 @@
 #include <kiwi.fast.plugin_utility/detail/config.h>
 
 #include <kiwi.fast.plugin_utility/detail/data_value_wrapper.h>
-
 #include <kiwi.fast.plugin_utility/data_object_value.h>
 #include <kiwi.fast.plugin_utility/data_deque_value.h>
-
+#include <kiwi.fast.plugin_utility/code_conversion.h>
 #include <kiwi.fast.plugin_utility/exceptions.h>
 
 #include <deque>
@@ -22,6 +21,16 @@ public:
 		: m_data_value_wrapper(nullptr)
 	{}
 
+	template<typename CharType>
+	static data_value create(CharType const* class_name)
+	{
+		return create(std::basic_string<CharType>(class_name));
+	}
+	template<typename CharType>
+	static data_value create(std::basic_string<CharType> const& class_name)
+	{
+		return create(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(class_name).c_str());
+	}
 	static data_value create(const char8_t* class_name);
 
 	data_value(data_value const& rhs)
@@ -49,6 +58,8 @@ public:
 			m_data_value_wrapper = nullptr;
 		}
 		delete tmp;
+
+		return *this;
 	}
 
 	data_value(data_value&& rhs)
@@ -84,27 +95,6 @@ public:
 		return m_data_value_wrapper != nullptr;
 	}
 
-	bool operator==(data_value const& rhs) const
-	{
-		if (m_data_value_wrapper == nullptr)
-		{
-			return rhs.m_data_value_wrapper == nullptr;
-		}
-		else if (rhs.m_data_value_wrapper == nullptr)
-		{
-			return false;
-		}
-		else
-		{
-			return m_data_value_wrapper->operator==(*rhs.m_data_value_wrapper);
-		}
-	}
-
-	bool operator!=(data_value const& rhs) const
-	{
-		return !(operator==(rhs));
-	}
-
 	std::optional<std::u8string> inside_type() const
 	{
 		if (m_data_value_wrapper == nullptr)
@@ -113,6 +103,9 @@ public:
 		}
 		return m_data_value_wrapper->inside_type();
 	}
+
+	//不提供operator==和operator!=，因为内部类型除了基本类型指针外，还可能是虚基类指针，更还有指针数组的可能，统一接口比较麻烦
+	//最好还是获得指针后再通过指针进行比较操作
 
 	std::optional<std::u8string> to_string() const;
 
@@ -125,7 +118,7 @@ public:
 	static data_value from_string(std::basic_string<CharType> const& str, std::basic_string<CharType> const& class_name)
 	{
 		return from_string(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<CharType>(str).c_str()
-			, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<CharType>(str).c_str());
+			, KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<CharType>(class_name).c_str());
 	}
 	static data_value from_string(const char8_t* str, const char8_t* class_name);
 

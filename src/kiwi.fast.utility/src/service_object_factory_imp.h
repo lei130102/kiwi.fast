@@ -5,6 +5,10 @@
 #include <kiwi.fast.plugin_utility/code_conversion.h>
 #include <kiwi.fast.plugin_utility/type_converter.h>
 #include <kiwi.fast.plugin_utility/exceptions.h>
+#include <kiwi.fast.plugin_utility/service.h>
+#include <kiwi.fast.plugin_utility/service_object_factory.h>
+
+#include <kiwi.fast.utility/src/register_type.h>
 
 #include <functional>
 #include <map>
@@ -43,7 +47,7 @@ public:
     FunctionType find_function_by_class_name(const char8_t* class_name, ObjectMap object_map, DequeMap deque_map)
     {
         std::u8string class_name_ = class_name;
-        if (parse_class_name(class_name, class_name_))
+        if (register_type::parse_class_name(class_name, class_name_))
         {
             auto iter = deque_map.find(class_name_);
             if (iter != deque_map.end())
@@ -130,6 +134,10 @@ public:
 
     virtual void object_from_string(const char8_t* str, const char8_t* class_name, std::any& object)
     {
+        if (object.has_value())
+        {
+            KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"object 不能含有值");
+        }
         from_u8string_function_type f = find_function_by_class_name<from_u8string_function_type>
             (class_name, m_object_from_u8string_map, m_deque_from_u8string_map);
         if (f)
@@ -138,9 +146,8 @@ public:
         }
     }
 
-protected:
     template<typename T, typename TImp = T>
-    void insert_object_create_destroy()
+    static void insert_object_create_destroy()
 	{
 		service_object_factory_imp::m_create_object_map.insert(u8string_create_function_map_type::value_type(
 			KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<T>()
@@ -183,7 +190,7 @@ protected:
 		));
 	};
     template<typename T, typename TImp = T>
-    void insert_deque_create_destroy()
+    static void insert_deque_create_destroy()
 	{
 		service_object_factory_imp::m_create_deque_map.insert(u8string_create_function_map_type::value_type(
 			KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<T>()
@@ -251,57 +258,87 @@ protected:
 	};
 
     template<typename T, typename FToString, typename FFromString>
-    void insert_object_u8string(FToString f_to_string, FFromString f_from_string)
+    static void insert_object_u8string(FToString f_to_string, FFromString f_from_string)
 	{
 		service_object_factory_imp::m_object_to_u8string_map.insert(to_u8string_function_map_type::value_type(
 			KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<T>()
 			,
-			[f = f_to_string](std::any const& object) {return f(std::any_cast<T const*>(object)); }
+			[f = f_to_string](std::any const& object) {
+
+                if (object.type() == typeid(T*))
+                {
+                    return f(std::any_cast<T*>(object));
+                }
+                else if (object.type() == typeid(T const*))
+                {
+                    return f(std::any_cast<T const*>(object));
+                }
+                else
+                {
+                    KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"object_to_string函数的any参数中只能存放T*或者T const*类型");
+                    return f(nullptr);
+                }
+            }
 		));
 
 		service_object_factory_imp::m_object_from_u8string_map.insert(from_u8string_function_map_type::value_type(
 			KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<T>()
 			,
-		    [f = f_from_string](std::u8string const& str, std::any& object) { f(str, std::any_cast<T*>(object)); }
+		    [f = f_from_string](std::u8string const& str, std::any& object) { 
+                //注意，这里要求传入的object为空，因为这里没有销毁
+                KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_object_factory> object_factory_service;
+                object = std::any_cast<T*>(object_factory_service->create_object(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<T>()));
+                f(str, std::any_cast<T*>(object));
+            }
 		));
 	}
 
     template<typename T, typename FToString, typename FFromString>
-    void insert_deque_u8string(FToString f_to_string, FFromString f_from_string)
+    static void insert_deque_u8string(FToString f_to_string, FFromString f_from_string)
 	{
 		service_object_factory_imp::m_deque_to_u8string_map.insert(to_u8string_function_map_type::value_type(
 			KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<T>()
 			,
-			[f = f_to_string](std::any const& deque) {return f(std::any_cast<std::deque<T*> const*>(deque)); }
+			[f = f_to_string](std::any const& deque) {
+
+                if (deque.type() == typeid(std::deque<T*>*))
+                {
+                    return f(std::any_cast<std::deque<T*>*>(deque)); 
+                }
+                else if (deque.type() == typeid(std::deque<T*> const*))
+                {
+                    return f(std::any_cast<std::deque<T*> const*>(deque)); 
+                }
+                else
+                {
+                    KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error, u8"object_to_string函数的any参数中只能存放T*或者T const*类型");
+                    return f(nullptr);
+                }
+            }
 		));
 		service_object_factory_imp::m_deque_from_u8string_map.insert(from_u8string_function_map_type::value_type(
 			KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<T>()
 			,
-		    [f = f_from_string](std::u8string const& str, std::any& deque) { f(str, std::any_cast<std::deque<T*>*>(deque)); }
+		    [f = f_from_string](std::u8string const& str, std::any& deque) {
+
+                //注意，这里要求传入的object为空，因为这里没有销毁
+                KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_object_factory> object_factory_service;
+                deque = std::any_cast<std::deque<T*>*>(object_factory_service->create_object(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER type_converter::to_string<std::deque<T*>>()));
+                f(str, std::any_cast<std::deque<T*>*>(deque));
+            }
 		));
 	}
 
-    service_object_factory_imp();
+protected:
+    service_object_factory_imp()
+        :m_register_type(register_type::create())
+    {}
 
     virtual ~service_object_factory_imp()
     {}
 
-    bool parse_class_name(const char8_t* class_name, std::u8string& deque_element_class_name)
-    {
-        static std::u8string const deque_prefix = u8"std::deque<";
-        static std::size_t const deque_prefix_length = deque_prefix.length();
-
-        std::u8string class_name_ = class_name;
-        std::size_t class_name_length = class_name_.length();
-        if((class_name_.substr(0, deque_prefix_length) == deque_prefix)
-                && (class_name_[class_name_length-1] == u8'>'))
-        {
-            //比如class_name是std::deque<int*>，那么deque_element_class_name就是int
-            deque_element_class_name = class_name_.substr(deque_prefix_length, class_name_length - deque_prefix_length - 1 - 1);
-            return true;
-        }
-        return false;
-    }
+private:
+    register_type* m_register_type;
 
 private:
     static u8string_create_function_map_type m_create_object_map;
@@ -335,4 +372,12 @@ KIWI_FAST_CLOSE_UTILITY_NAMESPACE
     void destroy_object(std::any& object, const char8_t* class_name)                                                                                       \
     {                                                                                                                                                      \
         imp_class::destroy_object(object, class_name);                                                                                                     \
-    }                                                                                                                                                      
+    }                                                                                                                                                      \
+    std::optional<std::u8string> object_to_string(std::any const& object, const char8_t* class_name)                                                       \
+    {                                                                                                                                                      \
+        return imp_class::object_to_string(object, class_name);                                                                                            \
+    }                                                                                                                                                      \
+    void object_from_string(const char8_t* str, const char8_t* class_name, std::any& object)                                                               \
+    {                                                                                                                                                      \
+        imp_class::object_from_string(str, class_name, object);                                                                                            \
+    }

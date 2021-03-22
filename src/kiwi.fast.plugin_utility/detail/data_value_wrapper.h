@@ -19,7 +19,6 @@ namespace detail
 		virtual std::type_index type_index() const = 0;
 		virtual std::optional<std::u8string> inside_type() const = 0;
 		virtual data_value_wrapper* copy() const = 0;
-		virtual bool operator==(data_value_wrapper const& rhs) const = 0;
 		virtual void* pointer() = 0;
 		virtual void const* pointer() const = 0;
 		virtual void* release_object() = 0;

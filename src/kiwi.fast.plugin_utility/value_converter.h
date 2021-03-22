@@ -23,7 +23,7 @@ namespace value_converter
     namespace detail
     {
         template<typename CharType = char8_t>
-        inline std::size_t deque_element_number_from_string(CharType const* str, CharType const* sep, bool* is_error = nullptr)
+        inline std::size_t deque_element_number_from_string(std::basic_string<CharType> const& str, std::basic_string<CharType> const& sep, bool* is_error = nullptr)
         {
             bool is_error_ = false;
             if (is_error != nullptr)
@@ -32,11 +32,14 @@ namespace value_converter
             }
 
             std::size_t result = 0;
-            std::basic_string<CharType> str_ = str;
 
-            if (str_.empty())
+            if (str.empty())
             {
                 return result;
+            }
+            else
+            {
+                ++result;
             }
 
             bool parsing = true;
@@ -44,10 +47,10 @@ namespace value_converter
             std::size_t element_index = 0;
             while (parsing)
             {
-                typename std::basic_string<CharType>::size_type index = str_.find(sep, last_index);
+                typename std::basic_string<CharType>::size_type index = str.find(sep, last_index);
                 if (index == std::basic_string<CharType>::npos)
                 {
-                    index = str_.size();
+                    index = str.size();
                 }
                 if (is_error_)
                 {
@@ -58,7 +61,7 @@ namespace value_converter
                     return result;
                 }
                 last_index = index + std::basic_string<CharType>(sep).size();
-                if (index == str_.size())
+                if (index == str.size())
                 {
                     parsing = false;
                 }
@@ -69,11 +72,10 @@ namespace value_converter
             }
             return result;
         }
-
-        template<typename CharType = char8_t>
-        inline std::size_t deque_element_number_from_string(std::basic_string<CharType> const& str, std::basic_string<CharType> const& sep, bool* is_error = nullptr)
+        template<typename CharType>
+        inline std::size_t deque_element_number_from_string(CharType const* str, CharType const* sep, bool* is_error = nullptr)
         {
-            return deque_element_number_from_string(str.c_str(), sep.c_str(), is_error);
+            return deque_element_number_from_string(std::basic_string<CharType>(str), std::basic_string<CharType>(sep), is_error);
         }
     }
 
@@ -129,8 +131,9 @@ namespace value_converter
         return deque_to_string<T>(deq, sep.c_str(), is_error);
     }
 
+
     template<typename T, typename CharType = char8_t>
-    inline void deque_from_string(std::deque<T*>* deq, CharType const* str, CharType const* sep, bool* is_error = nullptr)
+    inline void deque_from_string(std::deque<T*>* deq, std::basic_string<CharType> const& str, std::basic_string<CharType> const& sep, bool* is_error = nullptr)
     {
         bool is_error_ = false;
         if(is_error != nullptr)
@@ -138,9 +141,7 @@ namespace value_converter
             *is_error = false;
         }
 
-        std::basic_string<CharType> str_ = str;
-
-        if(str_.empty())
+        if(str.empty())
         {
             return;
         }
@@ -150,12 +151,12 @@ namespace value_converter
         std::size_t element_index = 0;
         while(parsing)
         {
-            typename std::basic_string<CharType>::size_type index = str_.find(sep, last_index);
+            typename std::basic_string<CharType>::size_type index = str.find(sep, last_index);
             if(index == std::basic_string<CharType>::npos)
             {
-                index = str_.size();
+                index = str.size();
             }
-            std::basic_string<CharType> token = str_.substr(last_index, (index - last_index));
+            std::basic_string<CharType> token = str.substr(last_index, (index - last_index));
             object_from_string<T, CharType>(deq->at(element_index), token, &is_error_);   //这里的索引操作可能抛出异常
             if(is_error_)
             {
@@ -166,7 +167,7 @@ namespace value_converter
                 return;
             }
             last_index = index + std::basic_string<CharType>(sep).size();
-            if(index == str_.size())
+            if(index == str.size())
             {
                 parsing = false;
             }
@@ -176,10 +177,11 @@ namespace value_converter
             }
         }
     }
+
     template<typename T, typename CharType = char8_t>
-    inline void deque_from_string(std::deque<T*>* deq, std::basic_string<CharType> const& str, std::basic_string<CharType> const& sep, bool* is_error = nullptr)
+    inline void deque_from_string(std::deque<T*>* deq, CharType const* str, CharType const* sep, bool* is_error = nullptr)
     {
-        return deque_from_string(deq, str.c_str(), sep.c_str(), is_error);
+        deque_from_string(deq, std::basic_string<CharType>(str), std::basic_string<CharType>(sep), is_error);
     }
 }
 
@@ -388,11 +390,11 @@ OBJECT_FROM_U8STRING_BY_STREAM_CAST(unsigned char, unsigned short)
 OBJECT_TO_U8STRING_BY_STREAM_CAST(signed char, short)
 OBJECT_FROM_U8STRING_BY_STREAM_CAST(signed char, short)
 
-OBJECT_TO_U8STRING_BY_STREAM_CAST(wchar_t, short)
-OBJECT_FROM_U8STRING_BY_STREAM_CAST(wchar_t, short)
+//wchar_t不适合跨平台，所以不提供
+//wchar_t在windows下和在unix下长度不同，导致值转为字符串不同，所以不提供wchar_t
 
-OBJECT_TO_U8STRING_BY_STREAM_CAST(char8_t, short)
-OBJECT_FROM_U8STRING_BY_STREAM_CAST(char8_t, short)
+OBJECT_TO_U8STRING_BY_STREAM_CAST(char8_t, unsigned short)
+OBJECT_FROM_U8STRING_BY_STREAM_CAST(char8_t, unsigned short)
 
 OBJECT_TO_U8STRING_BY_STRING(std::wstring)
 OBJECT_FROM_U8STRING_BY_STRING(std::wstring)

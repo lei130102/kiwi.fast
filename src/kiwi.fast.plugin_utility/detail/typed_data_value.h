@@ -31,6 +31,8 @@ namespace detail
             {}
         };
 
+        //因为在类模板中，所以可以直接使用仅提供前置声明的service_object_factory的成员函数create_object、copy_object和destroy_object
+
         T* obtain(arg_type const& arg) const
         {
             return std::any_cast<T*>(factory_service()->create_object(arg.m_type));
