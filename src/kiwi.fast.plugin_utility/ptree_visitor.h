@@ -45,9 +45,47 @@ public:
         return m_ptree_root;
     }
 
-    virtual std::optional<std::reference_wrapper<name_type>> name() = 0;
-    virtual std::optional<type_type> type() = 0;
-    virtual std::optional<std::reference_wrapper<item_value_type>> value() = 0;
+    virtual std::optional<std::reference_wrapper<name_type>> name()
+    {
+        std::deque<name_type> names(names());
+        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
+        if (ptree_item)
+        {
+            return (*ptree_item)->name();
+        }
+        else
+        {
+            return {};
+        }
+    }
+
+    virtual std::optional<type_type> type()
+    {
+        std::deque<std::u8string> names(names());
+        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
+        if (ptree_item)
+        {
+            return (*ptree_item)->v_type();
+        }
+        else
+        {
+            return {};
+        }
+    }
+
+    virtual std::optional<std::reference_wrapper<item_value_type>> value()
+    {
+        std::deque<std::u8string> names(names());
+        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
+        if (ptree_item)
+        {
+            return (*ptree_item)->item_value();
+        }
+        else
+        {
+            return {};
+        }
+    }
 
 protected:
     base_ptree_visitor(base_ptree_item* ptree_root)
@@ -70,48 +108,6 @@ public:
     ptree_visitor(base_ptree_item* ptree_root)
         : base_ptree_visitor(ptree_root)
     {}
-
-    std::optional<std::reference_wrapper<name_type>> name() override
-    {
-        std::deque<name_type> names(names());
-        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
-        if (ptree_item)
-        {
-            return (*ptree_item)->name();
-        }
-        else
-        {
-            return {};
-        }
-    }
-
-    std::optional<type_type> type() override
-    {
-        std::deque<std::u8string> names(names());
-        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
-        if(ptree_item)
-        {
-            return (*ptree_item)->v_type();
-        }
-        else
-        {
-            return {};
-        }
-    }
-
-    std::optional<std::reference_wrapper<item_value_type>> value() override
-    {
-        std::deque<std::u8string> names(names());
-        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
-        if (ptree_item)
-        {
-            return (*ptree_item)->item_value();
-        }
-        else
-        {
-            return {};
-        }
-    }
 };
 
 KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE

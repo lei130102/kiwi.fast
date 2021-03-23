@@ -29,3 +29,9 @@ namespace kiwi_fast{
 #define KIWI_FAST_ANONYMOUS_NAMESPACE namespace
 
 #define KIWI_FAST_WINDOWS_API
+
+#if defined(__linux__)
+#define KIWI_FAST_LINUX
+#elif defined(_WIN32)
+#define KIWI_FAST_WINDOWS
+#endif

@@ -834,20 +834,83 @@ BOOST_AUTO_TEST_CASE(c_test_ptree_item)
 
 BOOST_AUTO_TEST_CASE(c_test_setting)
 {
-    //测试基本缺省信息
-    //KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting> setting_service;
-    //std::optional<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER resource_object_factory<std::filesystem::path>> bin_dir_path = setting_service->setting(u8"bin_dir_path").value<std::filesystem::path>();
-    //if (bin_dir_path)
-    //{
-    //    //std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"bin_dir_path:")
-    //    //    << (*bin_dir_path)->string()
-    //    //    << '\n';
-    //}
-    //else
-    //{
-    //    std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8"没有 bin_dir_path 配置")
-    //        << '\n';
-    //}
+    KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER service_setting> setting_service;
+
+    //快速读取配置，仅只读
+    {
+        std::optional<std::filesystem::path> bin_dir_path = setting_service->bin_dir_path();
+        if (bin_dir_path)
+		{
+			std::filesystem::path bin_dir_path_value = *bin_dir_path;
+			std::cout << bin_dir_path_value << '\n';
+		}
+    }
+
+    //读取配置，如果要临时修改，那么添加到临时配置中(tmp_setting)(虽然不会保存，但优先级最高，相当于覆盖已有设置)，如果要针对本用户修改，那么添加到用户配置中(user_setting)，修改缺省是不会保存的(default_setting)
+	{
+		std::optional<std::reference_wrapper<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value>> bin_dir_path = setting_service->tmp_setting(u8"bin_dir_path")->value();
+		if (!bin_dir_path)
+		{
+			bin_dir_path = setting_service->user_setting(u8"bin_dir_path")->value();
+			if (!bin_dir_path)
+			{
+				bin_dir_path = setting_service->default_setting(u8"bin_dir_path")->value();
+			}
+		}
+		if (bin_dir_path)
+		{
+			std::filesystem::path bin_dir_path_value = (*bin_dir_path).get().value<std::filesystem::path>();
+			std::cout << bin_dir_path_value << '\n';
+		}
+	}
+
+    //修改配置，并且仅针对本用户
+    {
+		std::optional<std::reference_wrapper<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value>> custom_user_setting = setting_service->user_setting(u8"custom_user_setting")->value();
+        if (!custom_user_setting)
+        {
+            ////没有就添加
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
+            dv.value<std::u8string>() = u8"modified";
+            setting_service->setting_user()->add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"custom_user_setting", std::move(dv)));
+        }
+        else
+        {
+            ////有就修改
+
+            //已知之前类型的修改
+            (*custom_user_setting).get().value<std::u8string>() = u8"modified";
+
+            //未知之前类型的修改
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
+            dv.value<std::u8string>() = u8"modified";
+            (*custom_user_setting).get() = dv;   //如果dv不再使用，那么也可以 (*custom_user_setting).get() = std::move(dv);
+        }
+    }
+
+    //修改配置，并且仅临时且最高优先级
+    {
+		std::optional<std::reference_wrapper<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value>> custom_tmp_setting = setting_service->tmp_setting(u8"custom_tmp_setting")->value();
+        if (!custom_tmp_setting)
+        {
+            ////没有就添加
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
+            dv.value<std::u8string>() = u8"modified";
+            setting_service->setting_tmp()->add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"custom_tmp_setting", std::move(dv)));
+        }
+        else
+        {
+            ////有就修改
+
+            //已知之前类型的修改
+            (*custom_tmp_setting).get().value<std::u8string>() = u8"modified";
+
+            //未知之前类型的修改
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
+            dv.value<std::u8string>() = u8"modified";
+            (*custom_tmp_setting).get() = dv;   //如果dv不再使用，那么也可以 (*custom_tmp_setting).get() = std::move(dv);
+        }
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
