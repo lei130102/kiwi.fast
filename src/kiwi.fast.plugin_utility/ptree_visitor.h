@@ -4,154 +4,114 @@
 #include <kiwi.fast.plugin_utility/code_conversion.h>
 #include <kiwi.fast.plugin_utility/ptree_item.h>
 #include <kiwi.fast.plugin_utility/type_converter.h>
+#include <kiwi.fast.plugin_utility/ptree_item.h>
 
 #include <string>
 #include <deque>
 #include <optional>
+#include <memory>
 
 KIWI_FAST_OPEN_PLUGIN_UTILITY_NAMESPACE
-//////
-////////class ptree_root;
-//////
-//////class ptree_visitor
-//////{
-//////    //friend class ptree_root;
-//////
-//////public:
-//////    using name_type = base_ptree_item::name_type;
-//////    using type_type = base_ptree_item::type_type;
-//////    //using value_type = ptree_item::value_type;
-//////
-//////    ptree_visitor()
-//////        :m_ptree_root(nullptr)
-//////    {}
-//////
-//////    ptree_visitor(ptree_root* ptree_root_)
-//////        :m_ptree_root(ptree_root_)
-//////    {}
-//////
-//////    virtual ~ptree_visitor()
-//////    {}
-//////
-//////    ptree_visitor& operator()(const char8_t* name)
-//////    {
-//////        add_name(name);
-//////        return *this;
-//////    }
-//////
-//////    virtual std::optional<name_type> name()
-//////    {
-//////        auto ptree_item = find_object_value_item(m_names);
-//////        if(ptree_item)
-//////        {
-//////            return (*ptree_item).get().name();
-//////        }
-//////        else
-//////        {
-//////            return {};
-//////        }
-//////    }
-//////
-//////    virtual std::optional<type_type> type()
-//////    {
-//////        auto ptree_item = find_object_value_item(m_names);
-//////        if(ptree_item)
-//////        {
-//////            return (*ptree_item).get().type();
-//////        }
-//////        else
-//////        {
-//////            return {};
-//////        }
-//////    }
-//////
-//////    std::optional<data_value> value()
-//////    {
-//////        auto result = original_value();
-//////        if (result)
-//////        {
-//////            try
-//////            {
-//////                return std::get<data_value>(*result);
-//////            }
-//////            catch (std::bad_variant_access& e)
-//////            {
-//////                return {};
-//////            }
-//////        }
-//////        else
-//////        {
-//////            return {};
-//////        }
-//////    }
-//////
-//////    virtual std::optional<value_type> original_value()
-//////    {
-//////        auto ptree_item = find_object_value_item(m_names);
-//////        if (ptree_item)
-//////        {
-//////            return (*ptree_item).get().value();
-//////        }
-//////        else
-//////        {
-//////            return {};
-//////        }
-//////    }
-//////
-//////    bool set_value(data_value&& dv)
-//////    {
-//////        if (!dv.is_valid())
-//////        {
-//////            KIWI_FAST_THROW_DESCR(logic_error, u8"data_value对象不是有效的");
-//////            return false;
-//////        }
-//////        auto ptree_item = find_object_value_item(m_names);
-//////        if(ptree_item)
-//////        {
-//////            //设置type和value
-//////            (*ptree_item).get().type() = *dv.inside_type();
-//////            (*ptree_item).get().value() = dv;
-//////
-//////            return true;
-//////        }
-//////        else
-//////        {
-//////            return false;
-//////        }
-//////    }
-//////
-//////protected:
-//////
-//////    void add_name(std::u8string const& name)
-//////    {
-//////        m_names.push_back(name);
-//////    }
-//////
-//////    std::optional<std::reference_wrapper<ptree_item>> find_object_value_item(std::deque<std::u8string>& names);
-//////
-//////private:
-//////    std::deque<std::u8string> m_names;
-//////    std::shared_ptr<base_ptree_item> m_ptree_root;
-//////};
-//////
-//////
-//////
-//////template<typename CharType>
-//////ptree_visitor item(CharType const* name)
-//////{
-//////    return item(std::basic_string<CharType>(name));
-//////}
-//////template<typename CharType>
-//////ptree_visitor item(std::basic_string<CharType> const& name)
-//////{
-//////    return item(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char8_t>(name).c_str());
-//////}
-//////
-//////ptree_visitor item(const char8_t* name)
-//////{
-//////    ptree_visitor visitor(shared_from_this());
-//////    visitor.add_name(name);
-//////    return visitor;
-//////}
+
+class base_ptree_visitor
+{
+public:
+    using name_type = base_ptree_item::name_type;
+    using type_type = base_ptree_item::type_type;
+    using value_type = ptree_item::value_type;
+    using item_value_type = ptree_item::item_value_type;
+
+    virtual ~base_ptree_visitor() {}
+
+    base_ptree_visitor* item(const char8_t* name)
+    {
+        add_name(name);
+        return this;
+    }
+
+    void set_name(std::u8string const& name)
+    {
+        m_names.clear();
+        m_names.push_back(name);
+    }
+
+    std::deque<name_type> names() const
+    {
+        return m_names;
+    }
+
+    base_ptree_item* ptree_root() const
+    {
+        return m_ptree_root;
+    }
+
+    virtual std::optional<std::reference_wrapper<name_type>> name() = 0;
+    virtual std::optional<type_type> type() = 0;
+    virtual std::optional<std::reference_wrapper<item_value_type>> value() = 0;
+
+protected:
+    base_ptree_visitor(base_ptree_item* ptree_root)
+        :m_ptree_root(ptree_root)
+    {}
+
+    void add_name(std::u8string const& name)
+    {
+        m_names.push_back(name);
+    }
+
+private:
+    std::deque<name_type> m_names;
+    base_ptree_item* m_ptree_root;
+};
+
+class ptree_visitor : public base_ptree_visitor
+{
+public:
+    ptree_visitor(base_ptree_item* ptree_root)
+        : base_ptree_visitor(ptree_root)
+    {}
+
+    std::optional<std::reference_wrapper<name_type>> name() override
+    {
+        std::deque<name_type> names(names());
+        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
+        if (ptree_item)
+        {
+            return (*ptree_item)->name();
+        }
+        else
+        {
+            return {};
+        }
+    }
+
+    std::optional<type_type> type() override
+    {
+        std::deque<std::u8string> names(names());
+        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
+        if(ptree_item)
+        {
+            return (*ptree_item)->v_type();
+        }
+        else
+        {
+            return {};
+        }
+    }
+
+    std::optional<std::reference_wrapper<item_value_type>> value() override
+    {
+        std::deque<std::u8string> names(names());
+        auto ptree_item = detail::find_ptree_item_by_names(ptree_root(), names);
+        if (ptree_item)
+        {
+            return (*ptree_item)->item_value();
+        }
+        else
+        {
+            return {};
+        }
+    }
+};
 
 KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE

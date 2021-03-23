@@ -252,7 +252,7 @@ KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE
                 KIWI_FAST_THROW_DESCR(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER logic_error                        \
                     , u8"object_from_string 失败，指针为空");                                                          \
             }                                                                                                         \
-            *obj = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<type__::value_type>(*obj);            \
+            *obj = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<type__::value_type>(str);             \
         }                                                                                                             \
     }                                                                                                                 \
     KIWI_FAST_CLOSE_PLUGIN_UTILITY_NAMESPACE

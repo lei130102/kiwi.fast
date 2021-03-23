@@ -6,6 +6,7 @@
 #include <kiwi.fast.plugin_utility/exceptions.h>
 #include <kiwi.fast.plugin_utility/manager_module.h>
 #include <kiwi.fast.plugin_utility/ptree_item.h>
+#include <kiwi.fast.plugin_utility/ptree_visitor.h>
 #include <kiwi.fast.utility/src/manager_external_interface_imp.h>
 #include <kiwi.fast.utility/src/register_type.h>
 
@@ -437,6 +438,34 @@ BOOST_AUTO_TEST_CASE(c_test_data_value)
         BOOST_CHECK(*dv4.value<std::deque<bool*>>().at(0) == true);
     }
 
+    //std::u8string
+    {
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));  //用括号包住参数，防止被认为是函数声明
+        BOOST_CHECK(dv.is_valid());
+
+        dv.value<std::u8string>() = u8"张三";
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv2(dv);
+
+        *dv.pointer<std::u8string>() = u8"李四";
+
+        BOOST_CHECK(dv.value<std::u8string>() == u8"李四");
+        BOOST_CHECK(dv2.value<std::u8string>() == u8"张三");
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv3;
+        dv3 = dv;
+
+        *dv.pointer<std::u8string>() = u8"钱一";
+
+        BOOST_CHECK(dv.value<std::u8string>() == u8"钱一");
+        BOOST_CHECK(dv2.value<std::u8string>() == u8"张三");
+        BOOST_CHECK(dv3.value<std::u8string>() == u8"李四");
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv4(std::move(dv));
+
+        BOOST_CHECK(!dv.is_valid());
+        BOOST_CHECK(dv4.value<std::u8string>() == u8"钱一");
+    }
 }
 
 BOOST_AUTO_TEST_CASE(c_test_service_data_value)
@@ -584,43 +613,27 @@ BOOST_AUTO_TEST_CASE(c_test_ptree_item)
     {
         //创建ptree_root
 
-		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root root(u8"");
+		auto root = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_root();
 
 		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value name((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
 		name.value<std::u8string>() = u8"张三";
-		root.add(
-			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
-				std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item>(u8"name", std::move(name))
-				)
-		);
+        root->add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"name", std::move(name)));
 
-		auto info_item = std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item_set>(u8"info");
+        auto info_item = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item_set(u8"info");
 
 		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value sex((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
 		sex.value<std::u8string>() = u8"男";
-		info_item->add(
-			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
-				std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item>(u8"sex", std::move(sex))
-				)
-		);
+        info_item->add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"sex", std::move(sex)));
 
 		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value age((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<int>()));
 		age.value<int>() = 23;
-		info_item->add(
-			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
-				std::make_shared<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item>(u8"age", std::move(age))
-				)
-		);
+        info_item->add(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"age", std::move(age)));
 
-		root.add(
-			std::dynamic_pointer_cast<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item>(
-				info_item
-				)
-		);
+        root->add(info_item);
 
         //转为ptree类型
 
-		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree = root.to_root_ptree();
+		KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree = root->to_root_ptree();
 
         //转xml文件
         boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test.xml)"), ptree);
@@ -688,11 +701,134 @@ BOOST_AUTO_TEST_CASE(c_test_ptree_item)
         //抛出异常，并且文件内容为空，应该是因为他不是有效的ini格式
 
 
-        //使用 ptree_visitor 访问 ptree_root
+        ////从ptree转为ptree_root
+        auto root_from_ptree = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_root_by_ptree(ptree);
+
+        //测试转换是否成功
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree_from_root = root_from_ptree->to_root_ptree();
+        boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test_from_root.xml)"), ptree_from_root);
+
+
+        //使用 ptree_visitor 访问 root_from_ptree
+
+        //读写ptree_item中的name
+        std::optional<std::reference_wrapper<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item::name_type>> age_from_ptree = root_from_ptree->item(u8"info")->item(u8"age")->name();
+        if (age_from_ptree)
+        {
+            //读取
+            std::u8string age_str = (*age_from_ptree).get();
+
+            std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(age_str) << '\n';
+            BOOST_CHECK(age_str == u8"age");
+
+            //修改
+            (*age_from_ptree).get() = u8"modified_age";
+
+            //读取
+            age_str = (*age_from_ptree).get();
+
+            std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(age_str) << '\n';
+            BOOST_CHECK(age_str == u8"modified_age");
+        }
         
-        //读写data_value
-        //std::optional<std::reference_wrapper<data_value>> name = root.item(u8"name")->value();
-        //std::optional<std::reference_wrapper<data_value>> sex = root.item(u8"info")->(u8"sex")->value();
+        //读写ptree_item中的data_value
+        //ptree_item::value_type类型实际就是data_value类型
+        std::optional<std::reference_wrapper<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_item::value_type>> name_from_ptree = root_from_ptree->item(u8"name")->value();
+        if (name_from_ptree)
+        {
+            //读取
+            std::u8string name_str = (*name_from_ptree).get().value<std::u8string>();
+
+            std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(name_str) << '\n';
+            BOOST_CHECK(name_str == u8"张三");
+
+            //修改data_value的值
+            (*name_from_ptree).get().value<std::u8string>() = u8"李四";
+
+            //读取
+            name_str = (*name_from_ptree).get().value<std::u8string>();
+
+            std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(name_str) << '\n';
+            BOOST_CHECK(name_str == u8"李四");
+        }
+
+        std::optional<std::reference_wrapper<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value>> sex_from_ptree = root_from_ptree->item(u8"info")->item(u8"sex")->value();
+        if (sex_from_ptree)
+        {
+            //读取
+            std::u8string sex_str = (*sex_from_ptree).get().value<std::u8string>();
+
+            std::cout << KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(sex_str) << '\n';
+            BOOST_CHECK(sex_str == u8"男");
+
+            //修改整个data_value，即值和值类型
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv_int((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<int>()));
+            dv_int.value<int>() = 2;
+            (*sex_from_ptree).get() = dv_int;
+
+            //读取
+            int sex_int = (*sex_from_ptree).get().value<int>();
+
+            std::cout << sex_int << '\n';
+            BOOST_CHECK(sex_int == 2);
+        }
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree_from_root_modified = root_from_ptree->to_root_ptree();
+        boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test_from_root_modified.xml)"), ptree_from_root_modified);
+
+        //增加ptree_item
+        {
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<std::u8string>()));
+            dv.value<std::u8string>() = u8"门头沟";
+            std::shared_ptr<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item> new_item = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"address", std::move(dv));
+
+            root_from_ptree->add(new_item);
+        }
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree_from_root_add_item = root_from_ptree->to_root_ptree();
+        boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test_from_root_add_item.xml)"), ptree_from_root_add_item);
+
+        //减少ptree_item
+        {
+            root_from_ptree->remove(u8"address");
+        }
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree_from_root_remove_item = root_from_ptree->to_root_ptree();
+        boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test_from_root_remove_item.xml)"), ptree_from_root_remove_item);
+        
+        //增加ptree_item_set
+        {
+            std::shared_ptr<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item> new_item_set = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item_set(u8"rgb");
+
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv_r((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<unsigned short>()));
+            dv_r.value<unsigned short>() = 235;
+            std::shared_ptr<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item> r_item = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"r", std::move(dv_r));
+
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv_g((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<unsigned short>()));
+            dv_g.value<unsigned short>() = 200;
+            std::shared_ptr<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item> g_item = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"g", std::move(dv_g));
+
+            KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_value dv_b((KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER data_object_value<unsigned short>()));
+            dv_b.value<unsigned short>() = 100;
+            std::shared_ptr<KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER base_ptree_item> b_item = KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER create_ptree_item(u8"b", std::move(dv_b));
+
+            new_item_set->add(r_item);
+            new_item_set->add(g_item);
+            new_item_set->add(b_item);
+
+            root_from_ptree->add(new_item_set);
+        }
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree_from_root_add_item_set = root_from_ptree->to_root_ptree();
+        boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test_from_root_add_item_set.xml)"), ptree_from_root_add_item_set);
+
+        //减少ptree_item_set
+        {
+            root_from_ptree->remove(u8"rgb");
+        }
+
+        KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER ptree_root::ptree_type ptree_from_root_remove_item_set = root_from_ptree->to_root_ptree();
+        boost::property_tree::write_xml(KIWI_FAST_PLUGIN_UTILITY_NAMESPACE_QUALIFIER code_conversion<char>(u8R"(D:\test_from_root_remove_item_set.xml)"), ptree_from_root_remove_item_set);
 	}
 }
 
